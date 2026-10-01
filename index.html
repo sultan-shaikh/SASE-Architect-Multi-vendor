@@ -1,0 +1,2255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+<!-- This site is hosted on Netlify. Anyone can build and deploy a site
+     like this one for free: https://netlify.new/?utm_campaign=ai-legible&utm_source=comment&utm_medium=referral&utm_id=294f07df-8fa6-4b8e-a9f4-9ca28745f34b
+     Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
+<meta name="hosting-provider" content="Netlify">
+<meta name="netlify-deploy" content="https://netlify.new/?utm_campaign=ai-legible&amp;utm_source=meta&amp;utm_medium=referral&amp;utm_id=294f07df-8fa6-4b8e-a9f4-9ca28745f34b">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SASE Architect v6.0 (Multi-Vendor MSP Edition)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+    
+    <style>
+        /* Print layout handling */
+        @media print {
+            @page { margin: 1cm; size: A4; }
+            body { background: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .no-print, nav, #inputSection, button { display: none !important; }
+            
+            /* Print Modes */
+            body.print-report #reportSection { display: block !important; box-shadow: none; border: none; margin: 0; padding: 0; }
+            body.print-report #pdfProposalView { display: none !important; }
+            
+            body.print-proposal #reportSection { display: none !important; }
+            body.print-proposal #pdfProposalView { display: block !important; }
+
+            /* Report Cover */
+            #printCover { display: flex !important; flex-direction: column; justify-content: center; height: 100vh; page-break-after: always; }
+            section { page-break-inside: avoid; margin-bottom: 2cm; }
+            .page-break { page-break-before: always; }
+            table, tr, td, th { page-break-inside: avoid; }
+            h1 { font-size: 24pt !important; color: #0f172a !important; }
+            h2 { font-size: 18pt !important; color: #ea580c !important; }
+            p, li, td { font-size: 10pt !important; }
+        }
+
+        .loader {
+            border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid #f97316;
+            width: 20px; height: 20px; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .site-table-container { overflow-x: auto; padding-bottom: 20px; }
+        .site-table th { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; background: #f8fafc; padding: 6px; text-align: left; color: #64748b; font-weight: 700; }
+        .site-table td { padding: 4px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+        .site-select { font-size: 0.75rem; padding: 4px; border: 1px solid #cbd5e1; border-radius: 4px; background-color: #fff; width: 100%; }
+        .site-input-num { font-size: 0.75rem; padding: 4px; border: 1px solid #cbd5e1; border-radius: 4px; width: 55px; text-align: right; }
+        .wan-group { display: flex; gap: 2px; align-items: center; margin-bottom: 2px; }
+        .feat-group { display: flex; flex-direction: column; gap: 2px; }
+        .feat-label { font-size: 0.7rem; display: flex; align-items: center; gap: 4px; color: #475569; }
+        .addon-disabled { background-color: #f1f5f9; border-color: #e2e8f0; opacity: 0.7; }
+        .addon-disabled label { color: #64748b; font-weight: 600; cursor: not-allowed; }
+        .addon-active { background-color: #fff; border-color: #cbd5e1; }
+        .addon-active:hover { background-color: #f8fafc; }
+        .addon-active label { color: #1e293b; cursor: pointer; }
+        .vision-box { border: 2px dashed #cbd5e1; transition: all 0.3s; }
+        .vision-box:hover { border-color: #f97316; background-color: #fff7ed; }
+        .hidden-scope { display: none !important; }
+        .bom-table { width: 100%; font-size: 0.85rem; border-collapse: collapse; margin-bottom: 1rem; }
+        .bom-table th { background-color: #f1f5f9; color: #475569; font-weight: 600; text-transform: uppercase; padding: 8px; border: 1px solid #e2e8f0; font-size: 0.7rem; }
+        .bom-table td { border: 1px solid #e2e8f0; padding: 8px; }
+        .bom-total-row { font-weight: bold; background-color: #f8fafc; }
+        .service-option { display: flex; align-items: center; gap: 8px; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+        .service-option:hover { background-color: #f8fafc; border-color: #cbd5e1; }
+        .service-option input:checked { accent-color: #ea580c; }
+
+        #diagramWrapper { position: relative; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; overflow-x: auto; }
+        #diagramWrapper svg { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+        .diagram-legend { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 16px; padding: 12px 16px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.72rem; color: #475569; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-line { width: 28px; height: 3px; border-radius: 2px; flex-shrink: 0; }
+        .legend-line.mpls   { background: #064e3b; }
+        .legend-line.dia    { background: #2563eb; }
+        .legend-line.bb     { background: #dc2626; }
+        .legend-line.lte    { background: #dc2626; border-top: 2px dashed #dc2626; background: none; height: 0; border-bottom: none; }
+        .legend-line.ha     { background: #94a3b8; border-top: 2px dashed #94a3b8; background: none; height: 0; border-bottom: none; }
+        .legend-line.overlay { background: #7c3aed; }
+        .legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+
+        .diagram-toolbar { position: absolute; top: 12px; right: 12px; display: flex; gap: 6px; }
+        .diagram-btn { background: white; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 10px; font-size: 0.7rem; font-weight: 600; color: #475569; cursor: pointer; transition: all 0.15s; }
+        .diagram-btn:hover { background: #f1f5f9; border-color: #cbd5e1; }
+        .scan-progress { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; margin-top: 12px; font-size: 0.78rem; color: #475569; display: none; }
+        .scan-progress.visible { display: block; }
+        .scan-progress-item { display: flex; align-items: center; gap: 8px; padding: 3px 0; }
+        .scan-dot { width: 8px; height: 8px; border-radius: 50%; background: #cbd5e1; flex-shrink: 0; }
+        .scan-dot.done { background: #22c55e; }
+        .scan-dot.active { background: #f97316; animation: pulse 0.8s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        #rawDiagramCode { display: none; background: #0f172a; color: #e2e8f0; font-family: monospace; font-size: 0.7rem; padding: 16px; border-radius: 8px; white-space: pre-wrap; word-break: break-all; max-height: 300px; overflow-y: auto; margin-top: 12px; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen pb-20 print-report">
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- INTRO / VENDOR SELECTION MODAL                                  -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <div id="introModal" class="no-print fixed inset-0 z-[100] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+
+            <!-- SCREEN 1: WELCOME -->
+            <div id="introScreenWelcome" class="p-8">
+                <div class="text-center mb-6">
+                    <div class="mx-auto mb-4 w-14 h-14 rounded-full bg-orange-100 flex items-center justify-center">
+                        <svg class="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                    </div>
+                    <h1 class="text-2xl font-bold text-slate-900">SASE Solution Architect</h1>
+                    <p class="text-slate-500 text-sm mt-1">First-cut design &amp; proposal tool for Managed SASE engagements</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-slate-600 mb-8">
+                    <div class="flex gap-2 items-start bg-slate-50 rounded-lg p-3 border border-slate-200"><span class="text-lg">🖼️</span><span>Scan a whiteboard / Visio diagram and auto-extract sites, links &amp; HA pairs</span></div>
+                    <div class="flex gap-2 items-start bg-slate-50 rounded-lg p-3 border border-slate-200"><span class="text-lg">🧮</span><span>CPE sizing rules you can review &amp; tweak before the BoM is built</span></div>
+                    <div class="flex gap-2 items-start bg-slate-50 rounded-lg p-3 border border-slate-200"><span class="text-lg">📋</span><span>Bill of Materials strictly matched against your uploaded SKU price book</span></div>
+                    <div class="flex gap-2 items-start bg-slate-50 rounded-lg p-3 border border-slate-200"><span class="text-lg">📊</span><span>Auto-generated topology diagram, TCO, and a customer-ready PPTX/PDF</span></div>
+                </div>
+                <p class="text-center text-sm font-bold text-slate-700 mb-4">How would you like to choose your SASE vendor?</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button onclick="showVendorPicker()" class="text-left p-4 rounded-xl border-2 border-slate-200 hover:border-orange-400 hover:bg-orange-50 transition-all">
+                        <span class="block font-bold text-slate-900 mb-1">🎯 I'll choose the vendor</span>
+                        <span class="block text-xs text-slate-500">Jump straight in — pick Palo Alto Prisma SASE or Fortinet Secure SASE yourself.</span>
+                    </button>
+                    <button onclick="startVendorWizard()" class="text-left p-4 rounded-xl border-2 border-slate-200 hover:border-indigo-400 hover:bg-indigo-50 transition-all">
+                        <span class="block font-bold text-slate-900 mb-1">🧭 Help me decide</span>
+                        <span class="block text-xs text-slate-500">Answer 10 quick questions and let the tool recommend the best-fit vendor.</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- SCREEN 2: DIRECT VENDOR PICKER -->
+            <div id="introScreenVendorPicker" class="p-8 hidden">
+                <h2 class="text-xl font-bold text-slate-900 mb-1">Select a Vendor</h2>
+                <p class="text-sm text-slate-500 mb-6">You can still see the wizard recommendation later if you change your mind.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <button onclick="selectVendorAndClose('prisma')" class="text-left p-5 rounded-xl border-2 border-slate-200 hover:border-orange-400 hover:bg-orange-50 transition-all">
+                        <span class="block font-bold text-lg text-slate-900 mb-1">🟠 Palo Alto Prisma SASE</span>
+                        <span class="block text-xs text-slate-500">Prisma Access (SSE) + Prisma SD-WAN (ION). Best for orgs standardising on PANW / Strata Cloud Manager.</span>
+                    </button>
+                    <button onclick="selectVendorAndClose('fortinet')" class="text-left p-5 rounded-xl border-2 border-slate-200 hover:border-red-400 hover:bg-red-50 transition-all">
+                        <span class="block font-bold text-lg text-slate-900 mb-1">🔴 Fortinet Secure SASE</span>
+                        <span class="block text-xs text-slate-500">FortiSASE (cloud) + FortiGate SD-WAN. Best for orgs with an existing Fortinet security fabric estate.</span>
+                    </button>
+                </div>
+                <button onclick="backToWelcome()" class="text-xs text-slate-400 hover:text-slate-600">← Back</button>
+            </div>
+
+            <!-- SCREEN 3: 10-QUESTION WIZARD -->
+            <div id="introScreenWizard" class="p-8 hidden">
+                <div class="flex justify-between items-center mb-1">
+                    <h2 class="text-xl font-bold text-slate-900">Vendor Fit Wizard</h2>
+                    <span id="wizardProgress" class="text-xs font-bold text-indigo-600">Q1 / 10</span>
+                </div>
+                <div class="w-full bg-slate-100 rounded-full h-1.5 mb-6"><div id="wizardBar" class="bg-indigo-500 h-1.5 rounded-full transition-all" style="width:10%"></div></div>
+                <div id="wizardQuestionBox"></div>
+                <button onclick="backToWelcome()" class="text-xs text-slate-400 hover:text-slate-600 mt-6">← Back to start</button>
+            </div>
+
+            <!-- SCREEN 4: WIZARD RESULT -->
+            <div id="introScreenResult" class="p-8 hidden text-center">
+                <h2 class="text-lg font-bold text-slate-500 mb-1">Recommended Vendor</h2>
+                <h1 id="wizardResultVendor" class="text-3xl font-extrabold mb-3">—</h1>
+                <p id="wizardResultReason" class="text-sm text-slate-600 mb-6 max-w-md mx-auto"></p>
+                <div id="wizardResultScores" class="flex justify-center gap-6 mb-8 text-sm"></div>
+                <div class="flex justify-center gap-3">
+                    <button id="wizardAcceptBtn" onclick="acceptWizardResult()" class="bg-slate-900 hover:bg-slate-800 text-white font-bold px-6 py-2.5 rounded-lg">Use This Vendor</button>
+                    <button onclick="showVendorPicker()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-6 py-2.5 rounded-lg">Choose Manually Instead</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <nav class="bg-slate-900 text-white p-4 shadow-lg sticky top-0 z-50 no-print">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <h1 class="text-xl font-bold flex items-center gap-2">
+                <svg id="navVendorIcon" class="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                <span id="navTitle">SASE Architect v6.0</span>
+                <button onclick="openIntroFromNav()" id="navVendorBadge" class="ml-2 text-[10px] font-bold uppercase tracking-wide bg-slate-700 hover:bg-slate-600 px-2 py-1 rounded-full">Choose Vendor</button>
+            </h1>
+            <div class="flex items-center gap-2 w-full md:w-auto">
+                <!-- API key is now stored server-side (Netlify env var) and proxied via /.netlify/functions/gemini-proxy -->
+                <button onclick="scanModels()" class="bg-orange-600 hover:bg-orange-500 text-white text-sm px-4 py-2 rounded border border-orange-400 font-bold whitespace-nowrap">
+                    1. Scan Models
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-[95%] xl:max-w-7xl mx-auto p-4 md:p-6">
+
+        <div id="inputSection" class="bg-white rounded-xl shadow-md p-6 border border-gray-200 no-print">
+            <div class="mb-8 bg-blue-50 p-4 rounded border border-blue-200">
+                <label class="block text-sm font-bold text-blue-900 mb-2">2. Select AI Model</label>
+                <div class="flex gap-2 items-center">
+                    <select id="modelSelector" class="w-full p-2 border rounded border-blue-300 text-sm bg-white text-gray-400" disabled>
+                        <option>Waiting for Scan...</option>
+                    </select>
+                </div>
+                <p id="modelCount" class="text-xs text-blue-600 mt-1 italic"></p>
+            </div>
+
+            <!-- Vision Section -->
+            <div class="mb-8 p-6 rounded-xl vision-box bg-slate-50 text-center">
+                <h3 class="text-lg font-bold text-slate-700 mb-1 flex justify-center items-center gap-2">
+                    <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    Have a Diagram? (Whiteboard / Visio / Screenshot)
+                </h3>
+                <p class="text-xs text-slate-500 mb-4">Upload any network topology image. AI will extract sites, WAN links, bandwidths, HA pairs and device types.</p>
+                <div id="imagePreviewBox" class="hidden mb-4 flex justify-center">
+                    <div class="relative inline-block">
+                        <img id="imagePreview" src="" alt="Diagram preview" class="max-h-48 max-w-full rounded border border-indigo-200 shadow">
+                        <button onclick="clearDiagramImage()" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs font-bold leading-5">×</button>
+                    </div>
+                </div>
+                <div class="flex flex-wrap justify-center gap-3">
+                    <input type="file" id="diagramInput" accept="image/*" onchange="previewImage(this)" class="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-indigo-100 file:text-indigo-700 hover:file:bg-indigo-200">
+                    <button onclick="scanDiagram()" id="visionBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold py-2 px-6 rounded shadow transition-all">
+                        🔍 Scan Diagram
+                    </button>
+                </div>
+                <div id="scanProgress" class="scan-progress text-left">
+                    <div class="scan-progress-item"><span class="scan-dot" id="sp1"></span> Uploading image to AI model...</div>
+                    <div class="scan-progress-item"><span class="scan-dot" id="sp2"></span> Identifying site types & locations...</div>
+                    <div class="scan-progress-item"><span class="scan-dot" id="sp3"></span> Extracting WAN link types & bandwidths...</div>
+                    <div class="scan-progress-item"><span class="scan-dot" id="sp4"></span> Detecting HA pairs & redundancy...</div>
+                    <div class="scan-progress-item"><span class="scan-dot" id="sp5"></span> Detecting device models & features...</div>
+                    <div class="scan-progress-item"><span class="scan-dot" id="sp6"></span> Building site table...</div>
+                    <div id="scanResultSummary" class="mt-2 pt-2 border-t border-gray-200 text-indigo-700 font-semibold text-xs hidden"></div>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center mb-6 pb-2 border-b border-gray-200">
+                <h2 class="text-lg font-bold text-gray-900">3. Architecture Requirements</h2>
+                <div class="flex items-center gap-2">
+                    <label class="text-xs font-bold text-gray-500 uppercase">Design Scope:</label>
+                    <select id="designScope" onchange="toggleScope()" class="text-sm border-2 border-indigo-500 text-indigo-700 font-bold rounded px-2 py-1 bg-indigo-50">
+                        <option value="Unified">Unified SASE (SSE + SD-WAN)</option>
+                        <option value="SSE_Only">SSE Only (Prisma Access)</option>
+                        <option value="SDWAN_Only">SD-WAN Only (Prisma SD-WAN)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="space-y-4 mb-8">
+                <div class="flex items-center gap-2">
+                    <label class="text-sm font-bold text-gray-700">Customer Name:</label>
+                    <input type="text" id="companyName" value="Acme Corp" placeholder="Customer Name" class="text-sm border rounded px-2 py-1 w-64">
+                </div>
+                
+                <div id="sseInputs" class="transition-all duration-300">
+                    <div class="flex items-center gap-2 mb-4 mt-6">
+                        <h3 id="ssePillarLabel" class="text-xs font-bold text-white bg-orange-600 px-3 py-1 rounded inline-block uppercase tracking-wide">Pillar 1: SSE</h3>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Remote Users</label>
+                            <input type="number" id="userCount" value="1500" class="mt-1 w-full p-2 border rounded text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Primary Region</label>
+                            <select id="region" class="mt-1 w-full p-2 border rounded text-sm"><option>Global</option><option>North America</option><option>EMEA</option><option>APAC</option></select>
+                        </div>
+                        <div>
+                            <label id="editionLabel" class="block text-sm font-medium text-gray-700">Edition</label>
+                            <select id="prismaEdition" onchange="updateAddons()" class="mt-1 w-full p-2 border rounded text-sm"></select>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Modules & Add-ons</label>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs" id="addonGrid"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="sdwanInputs" class="transition-all duration-300 border-t pt-6">
+                <div class="flex items-center gap-2 mb-4">
+                    <h3 id="sdwanPillarLabel" class="text-xs font-bold text-white bg-slate-700 px-3 py-1 rounded inline-block uppercase tracking-wide">Pillar 2: SD-WAN Sites</h3>
+                    <span class="text-xs text-gray-500 italic">(Bandwidth determines hardware model)</span>
+                </div>
+                <div class="site-table-container border rounded bg-white">
+                    <table class="w-full site-table" id="siteTable">
+                        <thead>
+                            <tr>
+                                <th style="width:90px">Type</th>
+                                <th style="width:110px">Country</th>
+                                <th style="width:110px">City</th>
+                                <th style="width:120px">Features (Br)</th>
+                                <th style="min-width:180px">WAN Links (Type + Mbps)</th>
+                                <th style="width:60px; text-align:center">HA</th>
+                                <th style="width:40px"></th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="mt-3 flex items-center gap-3">
+                    <button onclick="addSiteRow()" class="text-sm flex items-center gap-1 text-white bg-indigo-600 px-3 py-1.5 rounded hover:bg-indigo-700 font-medium shadow-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg> Add New Site
+                    </button>
+                    <!-- BULK CSV IMPORT BUTTON -->
+                    <div class="relative">
+                        <input type="file" id="siteCsvInput" accept=".csv" onchange="importSitesCSV(this)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" title="Upload CSV: Type, Country, City, WAN Type, Bandwidth, HA">
+                        <button class="text-sm flex items-center gap-1 text-slate-700 bg-slate-200 px-3 py-1.5 rounded hover:bg-slate-300 font-medium shadow-sm border border-slate-300">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg> Bulk Import Sites (CSV)
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 pt-6 border-t border-gray-200">
+                <h2 class="text-lg font-bold text-gray-900 mb-4">4. Managed Service Wrap Requirements</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="bg-violet-50 p-4 rounded-lg border border-violet-100">
+                        <h4 class="text-sm font-bold text-violet-900 mb-3 uppercase tracking-wide">A) Service Tiers (Mutually Exclusive)</h4>
+                        <div class="space-y-2 text-sm">
+                            <label class="service-option"><input type="radio" name="serviceTier" value="0" checked><div><span class="block text-gray-900 font-semibold">None / Product Only</span></div></label>
+                            <label class="service-option"><input type="radio" name="serviceTier" value="0.02"><div><span class="block text-gray-900 font-semibold">Foundation (2%)</span><span class="text-xs text-gray-500">Essential monitoring & incident management</span></div></label>
+                            <label class="service-option"><input type="radio" name="serviceTier" value="0.03"><div><span class="block text-gray-900 font-semibold">Foundation Plus (3%)</span><span class="text-xs text-gray-500">Adds proactive change management</span></div></label>
+                            <label class="service-option"><input type="radio" name="serviceTier" value="0.05"><div><span class="block text-gray-900 font-semibold">Premium (5%)</span><span class="text-xs text-gray-500">Full lifecycle & strategic support</span></div></label>
+                        </div>
+                    </div>
+                    <div class="bg-teal-50 p-4 rounded-lg border border-teal-100">
+                        <h4 class="text-sm font-bold text-teal-900 mb-3 uppercase tracking-wide">B) In-Life Support Expertise (Mutually Exclusive)</h4>
+                        <div class="space-y-2 text-sm">
+                            <label class="service-option"><input type="radio" name="supportRole" value="0" checked><div><span class="block text-gray-900 font-semibold">None</span></div></label>
+                            <label class="service-option"><input type="radio" name="supportRole" value="0.02"><div><span class="block text-gray-900 font-semibold">Service Ops Manager (SOM) - 2%</span><span class="text-xs text-gray-500">Operational governance</span></div></label>
+                            <label class="service-option"><input type="radio" name="supportRole" value="0.03"><div><span class="block text-gray-900 font-semibold">Tech Ops Analyst (TOA) - 3%</span><span class="text-xs text-gray-500">Technical oversight</span></div></label>
+                            <label class="service-option"><input type="radio" name="supportRole" value="0.05"><div><span class="block text-gray-900 font-semibold">Customer Success Manager (CSM) - 5%</span><span class="text-xs text-gray-500">Strategic alignment</span></div></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CPE SIZING RULES (hardcoded defaults, editable by the Solution Architect) -->
+            <div class="mt-8 pt-6 border-t border-gray-200">
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-lg font-bold text-gray-900">4b. CPE Sizing Rules <span class="text-xs font-normal text-gray-400">(vendor default logic — override before generating)</span></h2>
+                    <div class="flex gap-2">
+                        <button onclick="renderCpeRulesTable(true)" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold px-3 py-1.5 rounded border border-slate-300">↺ Reset to Vendor Defaults</button>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 mb-3">These bandwidth thresholds decide which device model gets selected for each site. Solution Architects can rename models or change thresholds here — the change applies immediately to sizing &amp; the BoM.</p>
+                <div class="overflow-x-auto border rounded-lg bg-white">
+                    <table class="w-full text-xs" id="cpeRulesTable">
+                        <thead class="bg-slate-50 text-slate-500 uppercase text-[10px]">
+                            <tr><th class="p-2 text-left">Site Type</th><th class="p-2 text-left">Condition</th><th class="p-2 text-left">Up to (Mbps)</th><th class="p-2 text-left">Device Model</th><th class="p-2"></th></tr>
+                        </thead>
+                        <tbody id="cpeRulesBody"></tbody>
+                    </table>
+                </div>
+                <button onclick="addCpeRuleRow()" class="mt-2 text-xs text-indigo-600 font-semibold hover:text-indigo-800">+ Add custom rule</button>
+
+                <!-- LIVE PREVIEW: shows what CPE each ACTUAL site (from the table below) resolves to,
+                     using the current rules above — so SAs can confirm alignment before generating. -->
+                <div class="mt-5 pt-4 border-t border-dashed border-gray-200">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-sm font-bold text-gray-800">Preview: CPE Assigned to Your Actual Sites</h3>
+                        <button onclick="previewCpeAssignment()" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-3 py-1.5 rounded">▶ Preview Assignment</button>
+                    </div>
+                    <p class="text-xs text-gray-500 mb-2">This reads the site table in Section 3/Pillar 2 below and applies the rules above — it's exactly what will happen when you click Generate. Re-run after editing sites or rules.</p>
+                    <div class="overflow-x-auto border rounded-lg bg-white">
+                        <table class="w-full text-xs">
+                            <thead class="bg-slate-50 text-slate-500 uppercase text-[10px]">
+                                <tr><th class="p-2 text-left">#</th><th class="p-2 text-left">City</th><th class="p-2 text-left">Type</th><th class="p-2 text-left">Total BW</th><th class="p-2 text-left">Features</th><th class="p-2 text-left">HA</th><th class="p-2 text-left">Resolved CPE Model</th></tr>
+                            </thead>
+                            <tbody id="cpePreviewBody"><tr><td colspan="7" class="p-3 text-center text-gray-400 italic">Click "Preview Assignment" to check sizing against your current sites.</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Price Book (Required — BoM is generated <u>only</u> from this SKU list)</label>
+                    <input type="file" id="priceCsv" accept=".csv" onchange="onPriceCsvChange(this)" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-slate-200 file:text-slate-700 hover:file:bg-slate-300">
+                    <p class="text-[10px] text-gray-400 mt-1">Format: SKU, Description, HardwarePrice, Price_1Y, Price_3Y, Price_5Y — leave a cell blank if that price doesn't exist (e.g. hardware has no term price; a term-only SKU has no HardwarePrice). Term prices are the TOTAL contract price for that term, taken verbatim — never multiplied up. Any AI-proposed line without a matching SKU here will be flagged, not invented.</p>
+                    <p id="priceCsvStatus" class="text-[11px] font-semibold mt-1 text-amber-600">⚠ No price book uploaded yet — BoM generation is blocked until one is provided.</p>
+                </div>
+                <button onclick="runGenAI()" id="generateBtn" disabled class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 px-6 rounded-lg shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed border-b-4 border-orange-500">
+                    5. Generate SASE Design
+                </button>
+            </div>
+
+            <!-- STEP 6: MSP PROPOSAL SLIDES & PDF -->
+            <div id="step6Section" class="mt-4 p-5 rounded-xl bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-200">
+                <div class="mb-4 pb-2 border-b border-indigo-200">
+                    <h3 class="text-sm font-bold text-indigo-900 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"></path></svg>
+                        6. Customer-Ready Proposal Generator (MSP)
+                    </h3>
+                    <p class="text-xs text-indigo-700 mt-1">Configure your managed service presentation. Generates tailored PPTX and PDF documents.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Col 1: Identity & Colors -->
+                    <div class="space-y-3">
+                        <div><label class="block text-[10px] font-bold text-indigo-900 mb-1 uppercase tracking-wide">Prepared By (Your Name)</label><input type="text" id="proposalPreparedBy" placeholder="e.g. Jane Doe" class="w-full text-xs border border-indigo-300 rounded px-2 py-1.5 focus:outline-none focus:border-indigo-500 bg-white"></div>
+                        <div><label class="block text-[10px] font-bold text-indigo-900 mb-1 uppercase tracking-wide">Product Name</label><input type="text" id="proposalMspName" placeholder="e.g. Acme Managed Services" value="Acme Managed Services" class="w-full text-xs border border-indigo-300 rounded px-2 py-1.5 focus:outline-none focus:border-indigo-500 bg-white"></div>
+                        
+                        <!-- NEW: Color Pickers -->
+                        <div class="flex gap-4 pt-1">
+                            <div class="flex-1">
+                                <label class="block text-[10px] font-bold text-indigo-900 mb-1 uppercase tracking-wide" title="Changes the main PowerPoint/PDF headers">Primary Color</label>
+                                <div class="flex items-center gap-2 border border-indigo-300 rounded bg-white px-2 py-1">
+                                    <input type="color" id="themePrimary" value="#5514B4" class="h-6 w-8 p-0 border-0 cursor-pointer bg-transparent">
+                                    <span class="text-[10px] text-gray-500 font-mono" id="themePrimaryLabel">#5514B4</span>
+                                </div>
+                            </div>
+                            <div class="flex-1">
+                                <label class="block text-[10px] font-bold text-indigo-900 mb-1 uppercase tracking-wide" title="Used for highlights and accents">Accent Color</label>
+                                <div class="flex items-center gap-2 border border-indigo-300 rounded bg-white px-2 py-1">
+                                    <input type="color" id="themeAccent" value="#EA580C" class="h-6 w-8 p-0 border-0 cursor-pointer bg-transparent">
+                                    <span class="text-[10px] text-gray-500 font-mono" id="themeAccentLabel">#EA580C</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Col 2: Slide Config -->
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-[10px] font-bold text-indigo-900 mb-1 uppercase tracking-wide flex justify-between">Customer Logo <span>(Opt)</span></label>
+                            <input type="file" accept="image/*" onchange="handleLogoUpload(this)" class="w-full text-[10px] file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-indigo-100 file:text-indigo-700 hover:file:bg-indigo-200 file:font-semibold file:cursor-pointer cursor-pointer bg-white border border-indigo-300 rounded p-0.5">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-indigo-900 mb-1 uppercase tracking-wide">Deck Tone / Persona</label>
+                            <select id="proposalTone" class="w-full text-xs border border-indigo-300 rounded px-2 py-1.5 focus:outline-none focus:border-indigo-500 bg-white font-medium text-indigo-900">
+                                <option value="Executive">Executive (Business Value & ROI)</option>
+                                <option value="Technical">Technical (Architecture & Features)</option>
+                            </select>
+                        </div>
+                        <div class="bg-white p-2 border border-indigo-200 rounded">
+                            <label class="block text-[10px] font-bold text-indigo-900 mb-1.5 uppercase tracking-wide">Include Slides</label>
+                            <div class="flex flex-wrap gap-x-3 gap-y-2 text-[10px] font-medium text-slate-700">
+                                <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="chkSlideProb" checked class="accent-indigo-600"> Problem</label>
+                                <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="chkSlideCases" checked class="accent-indigo-600"> Use Cases</label>
+                                <label class="flex items-center gap-1 cursor-pointer opacity-50"><input type="checkbox" checked disabled class="accent-indigo-600"> Solution</label>
+                                <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="chkSlideArch" checked class="accent-indigo-600"> Diagram</label>
+                                <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="chkSlideBom" checked class="accent-indigo-600"> BoM</label>
+                                <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="chkSlideRoi" checked class="accent-indigo-600"> ROI</label>
+                                <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="chkSlideComp" checked class="accent-indigo-600"> Compare</label>
+                                <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="chkSlideRoadmap" checked class="accent-indigo-600"> Roadmap</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Col 3: Discovery Context -->
+                    <div class="flex flex-col h-full">
+                        <label class="block text-[10px] font-bold text-indigo-900 mb-1 uppercase tracking-wide">Discovery / Key Pain Points (Optional)</label>
+                        <textarea id="proposalContext" placeholder="Provide raw notes for the AI to base the presentation around. E.g. 'Struggling with VPN stability in APAC, wants to retire legacy MPLS by end of year, needs heavy O365 optimization...'" class="w-full flex-grow text-xs border border-indigo-300 rounded px-2 py-2 focus:outline-none focus:border-indigo-500 bg-white resize-none"></textarea>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-4 border-t border-indigo-200 flex flex-wrap items-center gap-3">
+                    <button onclick="generateProposalAssets()" id="proposalBtn" class="bg-indigo-700 hover:bg-indigo-600 text-white font-bold py-2.5 px-6 rounded-lg shadow border-b-4 border-violet-500 flex items-center gap-2 whitespace-nowrap transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                        Generate Proposal (PPTX & PDF)
+                    </button>
+                    
+                    <button onclick="printProposalPDF()" id="printPdfBtn" class="hidden bg-slate-800 hover:bg-slate-700 text-white font-bold py-2.5 px-4 rounded-lg shadow border-b-4 border-slate-600 flex items-center gap-2 whitespace-nowrap transition-all text-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                        Print / Save Formal PDF
+                    </button>
+                    
+                    <div id="proposalStatus" class="hidden text-xs text-indigo-700 flex items-center gap-2 font-medium">
+                        <span class="loader" style="width:14px;height:14px;border-width:2px;display:inline-block;border-top-color:#6366f1"></span>
+                        <span id="proposalStatusText">Preparing...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DEFAULT TECHNICAL REPORT SECTION (print-mode-report) -->
+        <div id="reportSection" class="hidden bg-white mt-8 shadow-xl rounded-xl border border-gray-200 overflow-hidden">
+            <div id="printCover" class="hidden p-12 bg-white text-center">
+                <div class="mb-10 text-orange-600"><svg class="w-24 h-24 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg></div>
+                <h1 class="text-5xl font-bold text-slate-900 mb-4">SASE Architecture Design</h1>
+                <h2 class="text-2xl text-orange-600 mb-12">Prepared for: <span id="coverCompany">Acme Corp</span></h2>
+                <div class="text-slate-500 mt-auto"><p class="mb-2">Generated by <span id="coverGenTool">SASE Architect</span></p><p class="coverDate text-sm"></p></div>
+            </div>
+
+            <div class="bg-slate-900 text-white p-8 flex justify-between items-start no-print-cover">
+                <div><h1 class="text-3xl font-bold">Technical Architecture Report</h1><p class="text-slate-400 mt-1">Prepared for: <span id="outCompany" class="text-orange-400 font-bold">Acme</span></p></div>
+                <div class="no-print"><button onclick="printTechnicalReport()" class="bg-orange-600 hover:bg-orange-700 text-white text-sm font-bold py-2 px-4 rounded flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg> Print Report (PDF)</button></div>
+            </div>
+
+            <div class="p-8 space-y-8">
+                <section><h3 class="text-lg font-bold text-slate-900 border-b pb-2 mb-3">Executive Summary</h3><div id="outSummary" class="text-gray-700 leading-relaxed text-sm"></div></section>
+
+                <section class="break-inside-avoid">
+                    <div class="flex items-center justify-between mb-3 border-b pb-2">
+                        <h3 class="text-lg font-bold text-slate-900">Architecture Topology</h3>
+                        <div class="flex gap-2 no-print">
+                            <button class="diagram-btn" onclick="zoomDiagram(1.2)">＋ Zoom In</button>
+                            <button class="diagram-btn" onclick="zoomDiagram(0.8)">－ Zoom Out</button>
+                            <button class="diagram-btn" onclick="resetZoom()">↺ Reset</button>
+                            <button class="diagram-btn" onclick="toggleRawCode()">{ } Code</button>
+                            <button class="diagram-btn" onclick="exportDiagramSVG()">↓ SVG</button>
+                        </div>
+                    </div>
+                    <div id="diagramWrapper"><div id="mermaidContainer" class="flex justify-center overflow-x-auto"></div></div>
+                    <div class="diagram-legend no-print" id="diagramLegend">
+                        <strong class="text-slate-600 mr-2">Legend:</strong>
+                        <span class="legend-item"><span class="legend-dot" style="background:#f97316"></span> <span id="legendSseLabel">SSE Cloud</span></span>
+                        <span class="legend-item"><span class="legend-dot" style="background:#3b82f6"></span> Remote Users</span>
+                        <span class="legend-item"><span class="legend-dot" style="background:#e2e8f0;border:2px solid #334155;border-radius:50%"></span> DC / HQ Hub</span>
+                        <span class="legend-item"><span class="legend-dot" style="background:#fff;border:2px solid #334155;border-radius:3px"></span> Branch</span>
+                        <span class="legend-item"><span class="legend-line mpls"></span> MPLS (private)</span>
+                        <span class="legend-item"><span class="legend-line dia"></span> Internet / DIA</span>
+                        <span class="legend-item"><span class="legend-line bb"></span> Broadband</span>
+                        <span class="legend-item" id="legendLTE" style="display:none"><span class="legend-line lte"></span> 5G / LTE</span>
+                        <span class="legend-item" id="legendHA"><span class="legend-line ha"></span> HA Pair</span>
+                        <span class="legend-item"><span class="legend-line overlay"></span> Overlay / SASE Fabric</span>
+                    </div>
+                    <pre id="rawDiagramCode"></pre>
+                </section>
+                
+                <section id="rptSdwan" class="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                    <div class="flex items-center gap-2 mb-4"><span class="w-2 h-6 bg-slate-700 rounded"></span><h3 class="text-lg font-bold text-slate-900">Section 1: <span id="rptSdwanTitle">SD-WAN Strategy</span></h3></div>
+                    <div id="outSdwan" class="text-gray-700 text-sm leading-relaxed prose max-w-none"></div>
+                </section>
+                
+                <section id="rptSse" class="bg-orange-50 p-6 rounded-lg border border-orange-200 page-break">
+                    <div class="flex items-center gap-2 mb-4"><span class="w-2 h-6 bg-orange-600 rounded"></span><h3 class="text-lg font-bold text-slate-900">Section 2: <span id="rptSseTitle">SSE Design</span></h3></div>
+                    <div class="mb-4"><span class="text-xs font-bold text-orange-800 bg-orange-200 px-2 py-1 rounded">Edition: <span id="outLicense">Enterprise</span></span> <span class="text-xs text-orange-800 ml-2">Active Modules: <span id="outModules"></span></span></div>
+                    <div id="outSse" class="text-gray-700 text-sm leading-relaxed prose max-w-none"></div>
+                </section>
+                
+                <section id="rptServices" class="break-inside-avoid bg-violet-50 p-6 rounded-lg border border-violet-200 hidden-scope">
+                    <div class="flex items-center gap-2 mb-4"><span class="w-2 h-6 bg-violet-600 rounded"></span><h3 class="text-lg font-bold text-slate-900">Section 3: Managed Services Wrap</h3></div>
+                    <table class="bom-table bg-white">
+                        <thead><tr><th>Service Component</th><th>Selection</th><th style="text-align:center">Basis</th><th style="text-align:right">Annual Cost</th></tr></thead>
+                        <tbody id="outServicesBody"></tbody>
+                        <tfoot><tr class="bom-total-row"><td colspan="3" style="text-align:right">Total Service OpEx (Annual):</td><td id="totalServiceOpex" style="text-align:right"></td></tr></tfoot>
+                    </table>
+                </section>
+
+                <section class="break-inside-avoid">
+                    <h3 class="text-lg font-bold text-slate-900 border-b pb-2 mb-3">Bill of Materials (BOM)</h3>
+                    <div id="capexSection">
+                        <h4 class="text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">Hardware (CapEx - One Time)</h4>
+                        <table class="bom-table">
+                            <thead><tr><th>SKU</th><th>Description</th><th style="text-align:center">Qty</th><th style="text-align:right">Unit Price</th><th style="text-align:right">Total</th></tr></thead>
+                            <tbody id="outBomCapex"></tbody>
+                            <tfoot><tr class="bom-total-row"><td colspan="4" style="text-align:right">Total Product CapEx:</td><td id="totalCapex" style="text-align:right"></td></tr></tfoot>
+                        </table>
+                    </div>
+                    <div id="opexSection" class="mt-6">
+                        <h4 class="text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">Subscriptions (OpEx — Contract Term Totals, from Price Book)</h4>
+                        <table class="bom-table">
+                            <thead><tr><th>SKU</th><th>Description</th><th style="text-align:center">Qty</th><th style="text-align:right">1Y Total</th><th style="text-align:right">3Y Total</th><th style="text-align:right">5Y Total</th></tr></thead>
+                            <tbody id="outBomOpex"></tbody>
+                            <tfoot><tr class="bom-total-row"><td colspan="3" style="text-align:right">Total Product OpEx:</td><td id="totalOpex1Y_line" style="text-align:right"></td><td id="totalOpex3Y_line" style="text-align:right"></td><td id="totalOpex5Y_line" style="text-align:right"></td></tr></tfoot>
+                        </table>
+                        <p class="text-[10px] text-gray-400 mt-1">Each term total is read directly from the price book — not derived by multiplying the 1Y price. A blank cell means that SKU has no price for that term in the uploaded CSV.</p>
+                    </div>
+                    <div class="mt-8 p-4 bg-slate-800 text-white rounded-lg">
+                        <h4 class="text-md font-bold text-orange-400 mb-4 border-b border-gray-600 pb-2">Total Cost of Ownership (TCO) Summary</h4>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                            <div><span class="block text-gray-400 text-xs">Product OpEx (1Y term)</span><span id="summProdOpex" class="font-bold text-lg"></span></div>
+                            <div><span class="block text-gray-400 text-xs">Annual Service OpEx</span><span id="summServOpex" class="font-bold text-lg"></span></div>
+                            <div class="col-span-2 text-right"><span class="block text-gray-400 text-xs">1-Year Grand Total (OpEx)</span><span id="summGrandOpex" class="font-bold text-2xl text-green-400"></span></div>
+                        </div>
+
+                        <!-- Discount Controls -->
+                        <div class="mt-4 pt-4 border-t border-gray-600">
+                            <p class="text-xs font-bold text-amber-400 uppercase tracking-wide mb-3">⚡ TCO Discount Override <span class="text-gray-500 font-normal normal-case">(applied only to 1Y / 3Y / 5Y totals — does not alter unit prices)</span></p>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="flex items-center gap-3 bg-slate-700 rounded px-3 py-2">
+                                    <label class="text-xs text-gray-300 whitespace-nowrap">🖥 Hardware (CapEx) Discount</label>
+                                    <div class="flex items-center gap-1 ml-auto">
+                                        <input type="number" id="discountCapex" min="0" max="100" step="0.5" value="0" onchange="recalcTCO()" class="w-16 text-right text-sm font-bold bg-slate-600 border border-slate-500 rounded px-2 py-1 text-white focus:border-amber-400 outline-none">
+                                        <span class="text-gray-400 text-sm">%</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-3 bg-slate-700 rounded px-3 py-2">
+                                    <label class="text-xs text-gray-300 whitespace-nowrap">📄 Licence (OpEx) Discount</label>
+                                    <div class="flex items-center gap-1 ml-auto">
+                                        <input type="number" id="discountOpex" min="0" max="100" step="0.5" value="0" onchange="recalcTCO()" class="w-16 text-right text-sm font-bold bg-slate-600 border border-slate-500 rounded px-2 py-1 text-white focus:border-amber-400 outline-none">
+                                        <span class="text-gray-400 text-sm">%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TCO Totals with discount -->
+                        <div class="mt-4 pt-4 border-t border-gray-600 grid grid-cols-3 gap-4 text-sm">
+                            <div class="text-right">
+                                <span class="block text-gray-400 text-xs">1-Year TCO (CapEx + OpEx)</span>
+                                <span id="totalOpex1Y" class="font-mono font-bold text-lg"></span>
+                                <span id="saving1Y" class="block text-xs text-emerald-400 font-semibold mt-0.5 hidden"></span>
+                            </div>
+                            <div class="text-right">
+                                <span class="block text-gray-400 text-xs">3-Year TCO (CapEx + OpEx)</span>
+                                <span id="totalOpex3Y" class="font-mono font-bold text-lg"></span>
+                                <span id="saving3Y" class="block text-xs text-emerald-400 font-semibold mt-0.5 hidden"></span>
+                            </div>
+                            <div class="text-right">
+                                <span class="block text-gray-400 text-xs">5-Year TCO (CapEx + OpEx)</span>
+                                <span id="totalOpex5Y" class="font-mono font-bold text-lg"></span>
+                                <span id="saving5Y" class="block text-xs text-emerald-400 font-semibold mt-0.5 hidden"></span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <!-- PDF PROPOSAL VIEW -->
+        <div id="pdfProposalView" class="hidden bg-white max-w-4xl mx-auto p-12 mt-8 text-slate-800 font-sans shadow-xl rounded border border-gray-200 mb-20">
+            <!-- Cover Page -->
+            <div id="pdfCoverBanner" class="text-center pb-12 mb-12 border-b-4 flex flex-col items-center justify-center min-h-[60vh]">
+                <img id="pdfCoverLogo" src="" class="h-24 object-contain mb-8" style="display:none;" alt="Customer Logo">
+                <h1 class="text-5xl font-extrabold text-slate-900 mb-6 tracking-tight">Managed SASE Proposal</h1>
+                <p class="text-2xl font-medium mb-12" id="pdfCompanySubtitle" style="color: #4338CA;">Prepared for: <span id="pdfCompanyLabel" class="font-bold"></span></p>
+                
+                <div class="mt-auto pt-12 text-sm text-gray-500 w-full flex justify-between border-t border-gray-200">
+                    <div class="text-left">
+                        <p class="font-bold text-gray-700">Delivered by:</p>
+                        <p id="pdfMspLabel"></p>
+                        <p id="pdfAuthorLabel"></p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-bold text-gray-700">Date:</p>
+                        <p class="pdfDateLabel"></p>
+                    </div>
+                </div>
+            </div>
+            <!-- Dynamic Content Container -->
+            <div id="pdfContentContainer" class="space-y-12"></div>
+        </div>
+
+    </main>
+
+    <script>
+        // ══════════════════════════════════════════════════════════════
+        // GEMINI PROXY HELPERS
+        // The API key lives ONLY server-side (Netlify env var GEMINI_API_KEY),
+        // read by /netlify/functions/gemini-proxy.js. The frontend never
+        // sees or stores the key — these two helpers replace every direct
+        // call to generativelanguage.googleapis.com.
+        // ══════════════════════════════════════════════════════════════
+        const GEMINI_PROXY_URL = '/.netlify/functions/gemini-proxy';
+
+        async function proxyListModels() {
+            const res = await fetch(GEMINI_PROXY_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ endpoint: 'models' })
+            });
+            return res.json();
+        }
+
+        // Mirrors the shape/behaviour of the old direct-fetch call so fetchWithRetry
+        // (which expects a Response-like object with .ok/.status/.json()) keeps working.
+        function proxyGenerateContent(model, body) {
+            return fetch(GEMINI_PROXY_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ endpoint: 'generateContent', model, body })
+            });
+        }
+
+        // ══════════════════════════════════════════════════════════════
+        // INTRO MODAL + VENDOR SELECTION / WIZARD
+        // ══════════════════════════════════════════════════════════════
+        function showIntroScreen(id) {
+            ['introScreenWelcome', 'introScreenVendorPicker', 'introScreenWizard', 'introScreenResult'].forEach(s => {
+                document.getElementById(s).classList.toggle('hidden', s !== id);
+            });
+        }
+        function openIntroFromNav() {
+            document.getElementById('introModal').classList.remove('hidden');
+            showIntroScreen('introScreenWelcome');
+        }
+        function backToWelcome() { showIntroScreen('introScreenWelcome'); }
+        function showVendorPicker() { showIntroScreen('introScreenVendorPicker'); }
+
+        function selectVendorAndClose(vendorKey) {
+            currentVendor = vendorKey;
+            applyVendorToUI();
+            document.getElementById('introModal').classList.add('hidden');
+        }
+
+        // ── 10-QUESTION VENDOR-FIT WIZARD ──
+        const WIZARD_QUESTIONS = [
+            { q: "What does the customer's current network security estate look like?", options: [
+                { label: "Fortinet is the incumbent — FortiGate at the edge, existing NSE-certified team", score: { fortinet: 3 } },
+                { label: "Palo Alto is the incumbent — NGFW or Prisma Access already in place", score: { prisma: 3 } },
+                { label: "Greenfield / mixed estate, no strong incumbent pull", score: { prisma: 1, fortinet: 1 } } ] },
+            { q: "How does the customer need to secure access to private apps for remote and hybrid workers?", options: [
+                { label: "Deep app-level ZTNA with inline inspection and isolated browsing, as its own capability", score: { prisma: 2 } },
+                { label: "Access folded into whatever endpoint/agent platform already manages their devices", score: { fortinet: 2 } },
+                { label: "No firm preference — either delivery model is acceptable", score: {} } ] },
+            { q: "What's really driving the commercial decision on this deal?", options: [
+                { label: "Cost-led — lowest total CapEx/OpEx per site is the deciding factor", score: { fortinet: 2 } },
+                { label: "Capability-led — best-of-breed SASE outweighs unit cost", score: { prisma: 2 } },
+                { label: "Balanced — value engineering matters but isn't the sole driver", score: { fortinet: 1, prisma: 1 } } ] },
+            { q: "What's the customer's vision for the branch — one box doing everything, or a thin edge with security in the cloud?", options: [
+                { label: "Single-box convergence — firewall, SD-WAN and security in one appliance per branch", score: { fortinet: 3 } },
+                { label: "Cloud-delivered security with a thin SD-WAN edge (security offloaded to the SSE cloud)", score: { prisma: 2 } },
+                { label: "Hybrid — some sites converged, some cloud-delivered", score: { fortinet: 1, prisma: 1 } } ] },
+            { q: "How important is it to run the whole security stack — firewall, SIEM, EDR, NDR — under one roof?", options: [
+                { label: "High — full-stack consolidation under one vendor is a stated goal", score: { fortinet: 2 } },
+                { label: "Low — customer is deliberately best-of-breed / multi-vendor by design", score: { prisma: 2 } },
+                { label: "Not yet decided — this deal alone won't determine that direction", score: {} } ] },
+            { q: "How much should AI and automation be driving day-to-day network and security operations?", options: [
+                { label: "High priority — autonomous ops, predictive analytics, AI-assisted policy tuning", score: { prisma: 2 } },
+                { label: "Solid cloud-based management is enough — AI-ops isn't a differentiator here", score: { fortinet: 1 } } ] },
+            { q: "What does the site/branch footprint look like?", options: [
+                { label: "High volume of small, simple branches — per-site cost and simplicity dominate", score: { fortinet: 2 } },
+                { label: "Fewer, larger, more complex sites needing deep SASE feature depth", score: { prisma: 2 } },
+                { label: "Highly distributed multi-country estate with variable site complexity", score: { fortinet: 1, prisma: 1 } } ] },
+            { q: "What in-house skills or operating model does the customer bring to this?", options: [
+                { label: "Strong in-house skills on the incumbent platform — lower training/transition overhead if we stay put", score: { fortinet: 2 } },
+                { label: "Team is platform-agnostic or trained elsewhere — no strong pull either way on skills", score: { prisma: 1 } },
+                { label: "Fully managed service (BT-operated) — the customer's internal skills gap is less relevant", score: {} } ] },
+            { q: "Are there compliance, data-residency, or regulatory drivers shaping the architecture?", options: [
+                { label: "Yes — strict data-residency / sovereign-cloud requirements need careful PoP and DLP placement", score: { prisma: 1 } },
+                { label: "Yes — sector-specific compliance (e.g. OT/ICS, critical infrastructure) favours a converged fabric approach", score: { fortinet: 1 } },
+                { label: "No unusual regulatory constraints on this deal", score: {} } ] },
+            { q: "How is this opportunity being evaluated commercially?", options: [
+                { label: "Competitive RFP where analyst positioning (Gartner Magic Quadrant, Forrester Wave) carries real weight", score: { prisma: 2 } },
+                { label: "Direct/relationship-led sale where existing vendor trust matters more than analyst positioning", score: { fortinet: 1 } },
+                { label: "Internal migration/refresh, not a competitive process", score: {} } ] }
+        ];
+        let wizardIndex = 0;
+        let wizardScores = { prisma: 0, fortinet: 0 };
+
+        function startVendorWizard() {
+            wizardIndex = 0; wizardScores = { prisma: 0, fortinet: 0 };
+            showIntroScreen('introScreenWizard');
+            renderWizardQuestion();
+        }
+        function renderWizardQuestion() {
+            const total = WIZARD_QUESTIONS.length;
+            document.getElementById('wizardProgress').innerText = `Q${wizardIndex + 1} / ${total}`;
+            document.getElementById('wizardBar').style.width = `${((wizardIndex + 1) / total) * 100}%`;
+            const item = WIZARD_QUESTIONS[wizardIndex];
+            const box = document.getElementById('wizardQuestionBox');
+            box.innerHTML = `<p class="font-bold text-slate-800 mb-4">${item.q}</p>` +
+                item.options.map((o, i) => `<button onclick="answerWizard(${i})" class="w-full text-left p-3 mb-2 rounded-lg border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50 transition-all text-sm">${o.label}</button>`).join('');
+        }
+        function answerWizard(optionIndex) {
+            const opt = WIZARD_QUESTIONS[wizardIndex].options[optionIndex];
+            Object.keys(opt.score).forEach(k => wizardScores[k] += opt.score[k]);
+            wizardIndex++;
+            if (wizardIndex < WIZARD_QUESTIONS.length) renderWizardQuestion();
+            else showWizardResult();
+        }
+        function showWizardResult() {
+            const winner = wizardScores.fortinet > wizardScores.prisma ? 'fortinet' : 'prisma';
+            const v = VENDORS[winner];
+            showIntroScreen('introScreenResult');
+            document.getElementById('wizardResultVendor').innerText = v.name;
+            document.getElementById('wizardResultVendor').style.color = v.themeColor;
+            document.getElementById('wizardResultReason').innerText =
+                `Based on your answers, ${v.name} scored higher on fit for this customer's incumbent estate, priorities, and deployment profile.`;
+            document.getElementById('wizardResultScores').innerHTML = `
+                <div><span class="block text-xs text-slate-400 uppercase">Prisma</span><span class="text-xl font-bold" style="color:${VENDORS.prisma.themeColor}">${wizardScores.prisma}</span></div>
+                <div><span class="block text-xs text-slate-400 uppercase">Fortinet</span><span class="text-xl font-bold" style="color:${VENDORS.fortinet.themeColor}">${wizardScores.fortinet}</span></div>`;
+            window._wizardWinner = winner;
+        }
+        function acceptWizardResult() {
+            selectVendorAndClose(window._wizardWinner);
+        }
+
+        // ── UI COLOR PICKER BINDINGS ──
+        document.getElementById('themePrimary').addEventListener('input', function() {
+            document.getElementById('themePrimaryLabel').innerText = this.value.toUpperCase();
+        });
+        document.getElementById('themeAccent').addEventListener('input', function() {
+            document.getElementById('themeAccentLabel').innerText = this.value.toUpperCase();
+        });
+
+        // ── BULK CSV SITE IMPORT ──
+        async function importSitesCSV(input) {
+            if (!input.files || input.files.length === 0) return;
+            const file = input.files[0];
+            try {
+                const text = await file.text();
+                const lines = text.split('\n');
+                let count = 0;
+                if(lines.length > 3 && confirm("Clear existing sites before importing?")) {
+                    document.querySelector('#siteTable tbody').innerHTML = '';
+                }
+                lines.forEach((line, i) => {
+                    const p = parseCSVLine(line);
+                    if (p.length < 3 || (i === 0 && line.toLowerCase().includes('type'))) return;
+                    addSiteRow({
+                        type: p[0]?.trim() || 'Branch',
+                        country: p[1]?.trim() || 'UK',
+                        city: p[2]?.trim() || 'New Site',
+                        wan1: { type: p[3]?.trim() || 'Internet (DIA)', bw: p[4]?.trim() || '100' },
+                        ha: p[5]?.trim()?.toUpperCase() === 'Y' ? 'Y' : 'N'
+                    });
+                    count++;
+                });
+                alert(`✅ Successfully imported ${count} sites!`);
+            } catch(e) {
+                alert("Failed to parse CSV: " + e.message);
+            }
+            input.value = '';
+        }
+
+        // ── INITIALISE MERMAID ──
+        mermaid.initialize({ 
+            startOnLoad: false, theme: 'base',
+            themeVariables: { primaryColor: '#f1f5f9', primaryTextColor: '#1e293b', primaryBorderColor: '#334155', lineColor: '#334155', clusterBkg: '#f8fafc', clusterBorder: '#94a3b8', fontSize: '14px', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace' },
+            securityLevel: 'loose', logLevel: 4,
+            flowchart: { htmlLabels: true, curve: 'basis', padding: 20, nodeSpacing: 50, rankSpacing: 80, useMaxWidth: true }
+        });
+
+        // ── CONSTANTS ──
+        const LOCATIONS = { "UK": ["London", "Manchester", "Birmingham", "Leeds"], "Germany": ["Frankfurt", "Berlin", "Munich"], "USA": ["New York", "Ashburn", "San Francisco", "Dallas"], "APAC": ["Singapore", "Tokyo", "Sydney"] };
+        const WAN_TYPES = ["MPLS", "Internet (DIA)", "Broadband", "5G/LTE", "Starlink", "None"];
+
+        const VENDORS = {
+            prisma: {
+                key: 'prisma', name: 'Palo Alto Prisma SASE', short: 'Prisma', navTitle: 'Prisma SASE Architect',
+                themeColor: '#ea580c',
+                sseLabel: 'Prisma Access (SSE)', sdwanLabel: 'Prisma SD-WAN Sites', editionLabel: 'Prisma Edition',
+                skuMatch: /ION|PRISMA|SUB|PA-|PAN-|GP-|STRATA/i,
+                editions: [
+                    { value: 'swg', label: 'Secure Web Gateway (SWG)' },
+                    { value: 'ztna', label: 'Zero Trust (ZTNA)' },
+                    { value: 'enterprise', label: 'Prisma Access Enterprise', selected: true }
+                ],
+                addOns: [
+                    { id: 'priv_app', label: 'Private App Access', inc: ['ztna', 'enterprise'] },
+                    { id: 'scm', label: 'Strata Cloud Manager Pro', inc: ['enterprise'] },
+                    { id: 'acc', label: 'App Acceleration', inc: [] },
+                    { id: 'appsec', label: 'App Security', inc: ['enterprise'] },
+                    { id: 'saas', label: 'SaaS Inline', inc: ['swg', 'enterprise'] },
+                    { id: 'ai', label: 'AI Access', inc: ['enterprise'] },
+                    { id: 'dlp', label: 'Data Loss Protection', inc: ['enterprise'] },
+                    { id: 'datasec', label: 'Data Security', inc: [] },
+                    { id: 'sspm', label: 'SSPM', inc: [] },
+                    { id: 'email_dlp', label: 'Email DLP', inc: [] },
+                    { id: 'ep_dlp', label: 'Endpoint DLP', inc: [] },
+                    { id: 'pab', label: 'Prisma Access Browser', inc: ['enterprise'] },
+                    { id: 'pra', label: 'Privileged Remote Access', inc: [] },
+                    { id: 'rbi', label: 'Remote Browser Isolation', inc: [] },
+                    { id: 'traffic', label: 'Traffic Replication', inc: [] },
+                    { id: 'iot', label: 'IoT Security', inc: [] },
+                    { id: 'colo', label: 'Colo-Connect', inc: [] },
+                    { id: 'inter', label: 'Interconnect', inc: [] },
+                    { id: 'logs', label: 'Strata Logging Service', inc: ['enterprise'] }
+                ],
+                cloudNodeLabel: '☁ Prisma Access\\nSSE Cloud',
+                subgraphLabel: '☁ Prisma Access — SASE Fabric',
+                defaultCpeRules: [
+                    { siteType: 'Cloud',  feature: 'any',  upTo: '',     model: 'vION (Virtual)' },
+                    { siteType: 'DC/HQ',  feature: 'any',  upTo: 1400,   model: 'ION 3200' },
+                    { siteType: 'DC/HQ',  feature: 'any',  upTo: 4000,   model: 'ION 5200' },
+                    { siteType: 'DC/HQ',  feature: 'any',  upTo: 15000,  model: 'ION 9200' },
+                    { siteType: 'DC/HQ',  feature: 'any',  upTo: 50000,  model: 'PA-5440' },
+                    { siteType: 'DC/HQ',  feature: 'any',  upTo: '',     model: 'PA-5450' },
+                    { siteType: 'Branch', feature: 'both', upTo: 800,    model: 'ION 1200-S-C' },
+                    { siteType: 'Branch', feature: 'sw',   upTo: 800,    model: 'ION 1200-S' },
+                    { siteType: 'Branch', feature: 'cell', upTo: 800,    model: 'ION 1200-C' },
+                    { siteType: 'Branch', feature: 'any',  upTo: 800,    model: 'ION 1200' },
+                    { siteType: 'Branch', feature: 'any',  upTo: 1300,   model: 'ION 3200' },
+                    { siteType: 'Branch', feature: 'any',  upTo: 3200,   model: 'ION 5200' },
+                    { siteType: 'Branch', feature: 'any',  upTo: 7500,   model: 'ION 9200' },
+                    { siteType: 'Branch', feature: 'any',  upTo: '',     model: 'ION 9200+' }
+                ]
+            },
+            fortinet: {
+                key: 'fortinet', name: 'Fortinet Secure SASE', short: 'Fortinet', navTitle: 'Fortinet SASE Architect',
+                themeColor: '#dc2626',
+                sseLabel: 'FortiSASE (SSE)', sdwanLabel: 'FortiGate SD-WAN Sites', editionLabel: 'FortiSASE Edition',
+                skuMatch: /FG-|FGT|FC-|FAZ|FORTI|FSA/i,
+                editions: [
+                    { value: 'base', label: 'FortiSASE Base' },
+                    { value: 'advanced', label: 'FortiSASE Advanced' },
+                    { value: 'enterprise', label: 'FortiSASE Enterprise', selected: true }
+                ],
+                addOns: [
+                    { id: 'ztna_agent', label: 'ZTNA Agent Access', inc: ['advanced', 'enterprise'] },
+                    { id: 'casb', label: 'Inline CASB', inc: ['enterprise'] },
+                    { id: 'dlp', label: 'Data Loss Prevention', inc: ['enterprise'] },
+                    { id: 'ips', label: 'IPS', inc: ['base', 'advanced', 'enterprise'] },
+                    { id: 'sandbox', label: 'FortiSandbox Cloud', inc: ['enterprise'] },
+                    { id: 'dem', label: 'Digital Experience Monitoring', inc: ['enterprise'] },
+                    { id: 'swg', label: 'Secure Web Gateway', inc: ['base', 'advanced', 'enterprise'] },
+                    { id: 'email_sec', label: 'Email Security', inc: [] },
+                    { id: 'waf', label: 'Web Application Firewall', inc: [] },
+                    { id: 'attack_surface', label: 'Attack Surface Security', inc: [] },
+                    { id: 'endpoint', label: 'FortiClient EMS (Endpoint)', inc: [] },
+                    { id: 'soc', label: 'SOC-as-a-Service', inc: [] },
+                    { id: 'iot', label: 'IoT Security', inc: [] },
+                    { id: 'private_access', label: 'Private Access (ZTNA)', inc: ['enterprise'] },
+                    { id: 'sdwan_overlay', label: 'Secure SD-WAN Overlay', inc: ['advanced', 'enterprise'] }
+                ],
+                cloudNodeLabel: '☁ FortiSASE\\nSecurity Cloud',
+                subgraphLabel: '☁ FortiSASE — SASE Fabric',
+                defaultCpeRules: [
+                    { siteType: 'Cloud',  feature: 'any',  upTo: '',     model: 'FortiGate VM (Virtual)' },
+                    { siteType: 'DC/HQ',  feature: 'any',  upTo: 1000,   model: 'FortiGate 100F' },
+                    { siteType: 'DC/HQ',  feature: 'any',  upTo: 3000,   model: 'FortiGate 200F' },
+                    { siteType: 'DC/HQ',  feature: 'any',  upTo: 10000,  model: 'FortiGate 400F' },
+                    { siteType: 'DC/HQ',  feature: 'any',  upTo: 40000,  model: 'FortiGate 1800F' },
+                    { siteType: 'DC/HQ',  feature: 'any',  upTo: '',     model: 'FortiGate 3700F' },
+                    { siteType: 'Branch', feature: 'both', upTo: 200,    model: 'FortiGate 40F + FortiSwitch + FortiExtender' },
+                    { siteType: 'Branch', feature: 'sw',   upTo: 200,    model: 'FortiGate 40F + FortiSwitch' },
+                    { siteType: 'Branch', feature: 'cell', upTo: 200,    model: 'FortiGate 40F + FortiExtender' },
+                    { siteType: 'Branch', feature: 'any',  upTo: 200,    model: 'FortiGate 40F' },
+                    { siteType: 'Branch', feature: 'any',  upTo: 500,    model: 'FortiGate 60F' },
+                    { siteType: 'Branch', feature: 'any',  upTo: 1000,   model: 'FortiGate 100F' },
+                    { siteType: 'Branch', feature: 'any',  upTo: 3000,   model: 'FortiGate 200F' },
+                    { siteType: 'Branch', feature: 'any',  upTo: '',     model: 'FortiGate 400F' }
+                ]
+            }
+        };
+
+        let currentVendor = null;
+        let PRICE_DB = {};
+        let currentDiagramCode = '';
+        let diagramZoom = 1;
+        let customerLogoBase64 = null; 
+
+        document.querySelectorAll('.coverDate, .pdfDateLabel').forEach(el => {
+            el.innerText = new Date().toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
+        });
+
+        function handleLogoUpload(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    customerLogoBase64 = e.target.result; 
+                    const pdfLogo = document.getElementById('pdfCoverLogo');
+                    pdfLogo.src = customerLogoBase64;
+                    pdfLogo.style.display = 'block';
+                };
+                reader.readAsDataURL(input.files[0]);
+            } else {
+                customerLogoBase64 = null;
+                document.getElementById('pdfCoverLogo').style.display = 'none';
+            }
+        }
+
+        function renderAddonGrid() {
+            const grid = document.getElementById('addonGrid');
+            grid.innerHTML = '';
+            const v = VENDORS[currentVendor];
+            v.addOns.forEach(addon => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center p-2 rounded border border-gray-200 bg-white hover:bg-slate-50 transition-colors addon-active';
+                div.id = `wrap_${addon.id}`;
+                div.innerHTML = `<input type="checkbox" id="add_${addon.id}" value="${addon.label}" class="w-4 h-4 text-orange-600 rounded mr-2 flex-shrink-0"><label for="add_${addon.id}" class="cursor-pointer select-none truncate" title="${addon.label}">${addon.label}</label>`;
+                grid.appendChild(div);
+            });
+        }
+
+        function renderEditionSelect() {
+            const sel = document.getElementById('prismaEdition');
+            const v = VENDORS[currentVendor];
+            sel.innerHTML = v.editions.map(e => `<option value="${e.value}" ${e.selected ? 'selected' : ''}>${e.label}</option>`).join('');
+        }
+
+        function applyVendorToUI() {
+            const v = VENDORS[currentVendor];
+            document.getElementById('navTitle').innerText = v.navTitle;
+            document.getElementById('navVendorBadge').innerText = v.short + ' — Change';
+            document.getElementById('navVendorIcon').style.color = v.themeColor;
+            document.getElementById('ssePillarLabel').innerText = 'Pillar 1: ' + v.sseLabel;
+            document.getElementById('sdwanPillarLabel').innerText = 'Pillar 2: ' + v.sdwanLabel;
+            document.getElementById('editionLabel').innerText = v.editionLabel;
+            renderEditionSelect();
+            renderAddonGrid();
+            updateAddons();
+            resetCpeRulesToVendorDefault();
+        }
+
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    document.getElementById('imagePreview').src = e.target.result;
+                    document.getElementById('imagePreviewBox').classList.remove('hidden');
+                    document.getElementById('imagePreviewBox').classList.add('flex');
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+        function clearDiagramImage() {
+            document.getElementById('diagramInput').value = '';
+            document.getElementById('imagePreviewBox').classList.add('hidden');
+            document.getElementById('imagePreviewBox').classList.remove('flex');
+        }
+
+        function toggleScope() {
+            const scope = document.getElementById('designScope').value;
+            document.getElementById('sseInputs').classList.toggle('hidden-scope', scope === 'SDWAN_Only');
+            document.getElementById('sdwanInputs').classList.toggle('hidden-scope', scope === 'SSE_Only');
+        }
+
+        function updateAddons() {
+            if (!currentVendor) return;
+            const edition = document.getElementById('prismaEdition').value;
+            VENDORS[currentVendor].addOns.forEach(addon => {
+                const checkbox = document.getElementById(`add_${addon.id}`);
+                const wrapper = document.getElementById(`wrap_${addon.id}`);
+                const label = wrapper.querySelector('label');
+                if (addon.inc.includes(edition)) {
+                    checkbox.checked = true; checkbox.disabled = true;
+                    wrapper.classList.add('addon-disabled'); wrapper.classList.remove('bg-white', 'addon-active', 'hover:bg-slate-50');
+                    label.innerText = `${addon.label} (Inc)`;
+                } else {
+                    checkbox.disabled = false; wrapper.classList.remove('addon-disabled'); wrapper.classList.add('bg-white', 'addon-active', 'hover:bg-slate-50');
+                    label.innerText = addon.label;
+                }
+            });
+        }
+
+        function zoomDiagram(factor) { diagramZoom *= factor; diagramZoom = Math.min(Math.max(diagramZoom, 0.3), 4); const svg = document.querySelector('#mermaidContainer svg'); if (svg) svg.style.transform = `scale(${diagramZoom})`; }
+        function resetZoom() { diagramZoom = 1; const svg = document.querySelector('#mermaidContainer svg'); if (svg) svg.style.transform = 'scale(1)'; }
+        function toggleRawCode() { const box = document.getElementById('rawDiagramCode'); box.style.display = box.style.display === 'block' ? 'none' : 'block'; }
+        function exportDiagramSVG() {
+            const svg = document.querySelector('#mermaidContainer svg');
+            if (!svg) return alert('No diagram to export.');
+            const blob = new Blob([svg.outerHTML], { type: 'image/svg+xml' });
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+            a.download = 'sase-topology.svg'; a.click();
+        }
+
+        function setScanStep(step, state) { const dot = document.getElementById(`sp${step}`); if (!dot) return; dot.className = 'scan-dot ' + state; }
+        function showScanProgress(show) { document.getElementById('scanProgress').classList.toggle('visible', show); }
+
+        const parseCSVLine = (str) => {
+            const arr = []; let quote = false; let col = "";
+            for (let c of str) {
+                if (c === '"') { quote = !quote; continue; }
+                if (c === ',' && !quote) { arr.push(col); col = ""; continue; }
+                col += c;
+            }
+            arr.push(col); return arr;
+        };
+
+        const readCsv = (file) => new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const lines = e.target.result.split('\n');
+                let validSkus = []; PRICE_DB = {};
+                const vendorMatch = currentVendor ? VENDORS[currentVendor].skuMatch : /.*/;
+                const num = (s) => { const n = parseFloat((s || '').replace(/[$,"]/g, '')); return isNaN(n) ? null : n; };
+                lines.forEach((line, idx) => {
+                    if (idx === 0 && /^sku\b/i.test(line.trim())) return;
+                    const parts = parseCSVLine(line);
+                    if (parts.length < 2) return;
+                    const sku = parts[0]?.trim(); const desc = parts[1]?.trim();
+                    const hwPrice = num(parts[2]); const p1y = num(parts[3]); const p3y = num(parts[4]); const p5y = num(parts[5]);
+                    if (sku && (hwPrice !== null || p1y !== null || p3y !== null || p5y !== null)) {
+                        PRICE_DB[sku] = { desc, hwPrice, p1y, p3y, p5y };
+                        if (sku.match(vendorMatch)) validSkus.push(`${sku} (${desc})`);
+                    }
+                });
+                resolve(validSkus.join('; '));
+            };
+            reader.readAsText(file);
+        });
+
+        function onPriceCsvChange(input) {
+            const statusEl = document.getElementById('priceCsvStatus');
+            const genBtn = document.getElementById('generateBtn');
+            if (!input.files || input.files.length === 0) {
+                statusEl.className = 'text-[11px] font-semibold mt-1 text-amber-600';
+                statusEl.innerText = '⚠ No price book uploaded yet — BoM generation is blocked until one is provided.';
+                genBtn.disabled = true;
+                return;
+            }
+            readCsv(input.files[0]).then(validSkus => {
+                const count = Object.keys(PRICE_DB).length;
+                const vendorSkuCount = validSkus ? validSkus.split(';').length : 0;
+                const termCount = Object.values(PRICE_DB).filter(v => v.p3y !== null && v.p5y !== null).length;
+                statusEl.className = 'text-[11px] font-semibold mt-1 text-emerald-600';
+                statusEl.innerText = `✅ Loaded ${count} SKUs (${vendorSkuCount} match the selected vendor, ${termCount} have full 1/3/5Y term pricing). BoM will show all three terms strictly from this list.`;
+                genBtn.disabled = false;
+            });
+        }
+
+        const fileToBase64 = (file, maxPx = 1024) => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onerror = reject;
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onerror = reject;
+                img.onload = () => {
+                    let { width, height } = img;
+                    if (width <= maxPx && height <= maxPx) { resolve(e.target.result.split(',')[1]); return; }
+                    const scale = maxPx / Math.max(width, height);
+                    width  = Math.round(width  * scale); height = Math.round(height * scale);
+                    const canvas = document.createElement('canvas');
+                    canvas.width  = width; canvas.height = height;
+                    canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                    const mimeOut = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+                    const dataUrl = canvas.toDataURL(mimeOut, 0.85);
+                    resolve(dataUrl.split(',')[1]);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // ══════════════════════════════════════════════════════════════
+        // RATE LIMIT & QUOTA ENGINE — now takes a zero-arg function that
+        // performs the fetch (via the proxy helpers above) instead of a
+        // URL+options pair, so it works for both proxy call shapes.
+        // ══════════════════════════════════════════════════════════════
+        async function fetchWithRetry(fetchFn, retries = 4, backoff = 10000, statusCb = null) {
+            for (let i = 0; i < retries; i++) {
+                let response;
+                try { 
+                    response = await fetchFn(); 
+                } 
+                catch (netErr) { 
+                    if (i < retries - 1) { await new Promise(r => setTimeout(r, 2000)); continue; }
+                    throw new Error('Network error: ' + netErr.message); 
+                }
+                
+                if (response.ok) {
+                    try { return await response.json(); } 
+                    catch (pe) { throw new Error('Could not parse API response: ' + pe.message); }
+                }
+
+                let body;
+                try { body = await response.json(); } catch (_) { body = null; }
+                const msg = body?.error?.message || body?.error?.status || ('HTTP ' + response.status);
+
+                if ((response.status === 429 || response.status === 503) && i < retries - 1) {
+                    let waitMs = backoff;
+                    const retryMatch = msg.match(/retry in (\d+(\.\d+)?)s/i);
+                    if (retryMatch && retryMatch[1]) {
+                        waitMs = Math.ceil(parseFloat(retryMatch[1]) * 1000) + 1500; 
+                    }
+
+                    if (statusCb) {
+                        let t = Math.ceil(waitMs / 1000);
+                        statusCb(`Rate limit paused. Auto-resuming in ${t}s…`);
+                        const tick = setInterval(() => { 
+                            t--; 
+                            if (t > 0 && statusCb) statusCb(`Rate limit paused. Auto-resuming in ${t}s…`); 
+                        }, 1000);
+                        await new Promise(r => setTimeout(r, waitMs)); 
+                        clearInterval(tick);
+                    } else { 
+                        await new Promise(r => setTimeout(r, waitMs)); 
+                    }
+                    
+                    backoff = Math.min(backoff * 1.5, 30000);
+                    continue;
+                }
+                
+                throw new Error(`[HTTP ${response.status}] ` + msg); 
+            }
+            throw new Error('Request failed after all retries. Please try again.');
+        }
+
+        async function scanModels() {
+            const select = document.getElementById('modelSelector');
+            select.innerHTML = "<option>Scanning...</option>"; select.disabled = true;
+            try {
+                const data = await proxyListModels();
+                let validModels = (data.models || []).filter(m => m.supportedGenerationMethods?.includes("generateContent"));
+                const recommended = ['gemini-2.5-flash', 'gemini-2.0-flash-exp', 'gemini-2.5-pro', 'gemini-1.5-pro'];
+                const modelSet = new Set(validModels.map(m => m.name.replace('models/', '')));
+                recommended.forEach(rec => modelSet.add(rec));
+                const finalModels = Array.from(modelSet);
+                select.innerHTML = "";
+                let preferred = null;
+                finalModels.forEach(name => {
+                    const opt = document.createElement('option');
+                    opt.value = name; opt.text = name; select.appendChild(opt);
+                    if (name.includes('gemini-2.5-flash')) preferred = name;
+                    else if (!preferred && name.includes('gemini-2.0-flash')) preferred = name;
+                    else if (!preferred && name.includes('gemini-1.5-flash')) preferred = name;
+                    else if (!preferred && name.includes('pro')) preferred = name;
+                });
+                if (preferred) select.value = preferred;
+                select.disabled = false;
+                document.getElementById('modelCount').innerText = `${finalModels.length} models available. Auto-selected: ${preferred} (Optimised for Rate Limits)`;
+            } catch (e) { alert("Network Error: " + e.message); select.innerHTML = "<option>Scan Failed</option>"; }
+        }
+
+        function extractJSON(raw) {
+            if (!raw || typeof raw !== 'string') throw new Error('Empty response from AI');
+            let cleaned = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
+            const start = cleaned.indexOf('{'); const end   = cleaned.lastIndexOf('}');
+            if (start === -1 || end === -1 || end <= start) throw new Error('No JSON object found in AI response.');
+            cleaned = cleaned.substring(start, end + 1);
+            try { return JSON.parse(cleaned); } catch (_) {}
+            const fixedTrailing = cleaned.replace(/,\s*([}\]])/g, '$1');
+            try { return JSON.parse(fixedTrailing); } catch (_) {}
+            const fixedNewlines = fixedTrailing.replace(/([^\\])\\n/g, '$1\\\\n');
+            try { return JSON.parse(fixedNewlines); } catch (_) {}
+            throw new Error('Could not parse AI response as JSON.');
+        }
+
+        async function scanDiagram() {
+            const modelName = document.getElementById('modelSelector').value;
+            const fileInput = document.getElementById('diagramInput');
+            const btn = document.getElementById('visionBtn');
+
+            if (modelName.includes("Wait") || modelName.includes("Scan")) { alert("Please click 'Scan Models' first!"); return; }
+            if (fileInput.files.length === 0) { alert("Please select an image file first."); return; }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px"><span class="loader" style="width:14px;height:14px;border-width:2px;display:inline-block"></span> Analyzing...</span>';
+            showScanProgress(true);
+            [1,2,3,4,5,6].forEach(i => setScanStep(i, ''));
+            const resultEl = document.getElementById('scanResultSummary');
+            resultEl.classList.add('hidden'); resultEl.style.color = '';
+            setScanStep(1, 'active');
+
+            const vendorHintForScan = currentVendor ? `The customer's selected vendor for this design is ${VENDORS[currentVendor].name} — if device labels on the diagram are ambiguous, prefer interpretations consistent with this vendor's typical topology (e.g. ${currentVendor==='fortinet' ? 'FortiGate, FortiSwitch, FortiExtender, FortiSASE cloud icon' : 'ION, PA-series, Prisma Access cloud icon'}), but still report what you actually see.` : `No vendor has been pre-selected — report device labels/models exactly as seen so the tool can infer vendor.`;
+            const visionPrompt = `Analyze this network topology diagram (whiteboard, Visio export, or screenshot) as a senior SASE solution architect. ${vendorHintForScan}
+Return ONLY a JSON object, no markdown, no explanation, no code fences. Schema: {"confidence":"high","notes":"","detectedVendor":"","users":0,"region":"EMEA","sites":[{"type":"DC","name":"","country":"UK","city":"","ha":false,"deviceModel":"","links":[{"type":"Internet (DIA)","bw":"100","bwUnit":"Mbps"}],"features":{"switching":false,"cellular":false}}]}
+Rules:
+- type: DC, HQ, Branch, or Cloud (Cloud = public cloud VPC/VNet site, not the SASE vendor's own cloud).
+- ha: true only if you see two physically paired/redundant devices or an explicit "HA" / "cluster" label at that site.
+- country: best guess from city/region labels — UK, Germany, USA, or APAC. Default UK if truly unknown.
+- deviceModel: transcribe any visible device/model text near the site exactly as written (e.g. "FG-100F", "ION 3200"); leave "" if none visible.
+- detectedVendor: "prisma", "fortinet", "other", or "" if you cannot tell from the image.
+- link type: MPLS, Internet (DIA), Broadband, 5G/LTE, or Starlink — infer from line style/labels (dashed=wireless/backup is a common convention).
+- bw: digits only, no units. bwUnit: Mbps or Gbps.
+- confidence: "high" only if labels are clearly legible; "medium" if you're inferring from layout; "low" if guessing. Explain any low-confidence guesses briefly in "notes".
+- If a value is genuinely unclear, use your best reasonable default rather than leaving fields empty, and lower "confidence" accordingly.
+Start your response with { and end with }.`;
+
+            try {
+                const base64Image = await fileToBase64(fileInput.files[0]);
+                setScanStep(1, 'done'); setScanStep(2, 'active');
+                const actualMime = fileInput.files[0].type === 'image/png' ? 'image/png' : 'image/jpeg';
+                const buildBody = () => ({ contents: [{ parts: [{ text: visionPrompt }, { inlineData: { mimeType: actualMime, data: base64Image } }] }], generationConfig: { temperature: 0.1, topP: 0.8, maxOutputTokens: 8192 } });
+
+                const callVisionAPI = async (model) => fetchWithRetry(
+                    () => proxyGenerateContent(model, buildBody()),
+                    4, 15000,
+                    (msg) => { resultEl.classList.remove('hidden'); resultEl.style.color = '#d97706'; resultEl.innerHTML = `⏳ ${msg}`; }
+                );
+
+                let apiResult;
+                try { apiResult = await callVisionAPI(modelName); } 
+                catch (e) {
+                    const isRateLimit = e.message.includes('rate limit') || e.message.includes('429') || e.message.includes('Quota');
+                    const fallbackModel = 'gemini-2.0-flash';
+                    
+                    if (!isRateLimit) { 
+                        try { apiResult = await callVisionAPI(fallbackModel); } 
+                        catch (e2) { throw new Error('Primary and fallback failed.\nPrimary: ' + e.message + '\nFallback: ' + e2.message); } 
+                    } 
+                    else { throw e; }
+                }
+
+                if (!apiResult.candidates || apiResult.candidates.length === 0) throw new Error(`AI returned no candidates. Block reason: ${apiResult.promptFeedback?.blockReason || 'unknown'}.`);
+                const candidate = apiResult.candidates[0]; const finishReason = candidate.finishReason;
+                if (finishReason === 'SAFETY' || finishReason === 'RECITATION') throw new Error(`AI refused (reason: ${finishReason}). Try a clearer image.`);
+                if (finishReason === 'MAX_TOKENS') throw new Error(`Response cut off (MAX_TOKENS). The image is too large/complex.`);
+                if (!candidate.content?.parts?.[0]?.text) throw new Error(`AI response has no text content.`);
+
+                const rawText = candidate.content.parts[0].text;
+                setScanStep(2, 'done'); setScanStep(3, 'active');
+                const data = extractJSON(rawText);
+                setScanStep(3, 'done'); setScanStep(4, 'active');
+
+                if (data.users && data.users > 0) document.getElementById('userCount').value = data.users;
+                if (data.region) { const regionEl = document.getElementById('region'); const match = Array.from(regionEl.options).find(o => o.value.toLowerCase().includes(data.region.toLowerCase())); if (match) regionEl.value = match.value; }
+                let vendorMismatchNote = '';
+                if (data.detectedVendor && VENDORS[data.detectedVendor] && currentVendor && data.detectedVendor !== currentVendor) {
+                    vendorMismatchNote = `<br/><span class="text-amber-600 font-semibold">⚠ Diagram looks like it may be ${VENDORS[data.detectedVendor].name} equipment, but you've selected ${VENDORS[currentVendor].name}. Double-check the vendor choice.</span>`;
+                }
+
+                setScanStep(4, 'done'); setScanStep(5, 'active');
+
+                if (data.sites && data.sites.length > 0) {
+                    const tbody = document.querySelector('#siteTable tbody'); tbody.innerHTML = '';
+                    data.sites.forEach(s => {
+                        const normalizeLink = (l) => {
+                            if (!l) return null; let bw = l.bw ? String(l.bw) : '';
+                            if (l.bwUnit === 'Gbps' || (bw && parseFloat(bw) <= 100 && l.label?.toLowerCase().includes('g'))) bw = String(parseFloat(bw) * 1000);
+                            return { type: l.type || 'Internet (DIA)', bw };
+                        };
+                        const links = (s.links || []).filter(l => l.type && l.type !== 'None').map(normalizeLink).filter(Boolean);
+                        const wan1 = links[0] || { type: 'Internet (DIA)', bw: '100' }; const wan2 = links[1] || { type: 'None', bw: '' }; const wan3 = links[2] || null;
+                        addSiteRow({ type: s.type || 'Branch', country: s.country || 'UK', city: s.city || s.name || 'Site', ha: s.ha, wan1, wan2, ...(wan3 ? { wan3 } : {}), feats: s.features || {} });
+                    });
+                }
+                setScanStep(5, 'done'); setScanStep(6, 'active');
+
+                const siteSummary = data.sites ? data.sites.map(s => `${s.city || s.name} (${s.type}${s.ha ? ' HA' : ''})`).join(', ') : 'None';
+                resultEl.classList.remove('hidden');
+                resultEl.innerHTML = `✅ Extracted ${data.sites?.length || 0} sites: ${siteSummary}${data.confidence ? ` · Confidence: ${data.confidence}` : ''}${data.notes ? `<br/><span class="text-gray-500">Note: ${data.notes}</span>` : ''}${vendorMismatchNote}`;
+                setScanStep(6, 'done');
+
+            } catch (e) {
+                [1,2,3,4,5,6].forEach(i => setScanStep(i, ''));
+                const resultEl = document.getElementById('scanResultSummary');
+                resultEl.classList.remove('hidden'); resultEl.style.color = '#dc2626';
+                resultEl.innerHTML = `❌ <strong>Scan failed:</strong> ${(e.message.length>300?e.message.substring(0,300)+'…':e.message).replace(/\n/g, '<br>')}<br><span class="text-gray-500 text-xs">Check F12 console.</span>`;
+            } finally { btn.disabled = false; btn.innerHTML = '🔍 Scan Diagram'; }
+        }
+
+        function normSiteType(type) {
+            if (type === 'DC' || type === 'HQ') return 'DC/HQ';
+            return type;
+        }
+
+        function resetCpeRulesToVendorDefault() {
+            renderCpeRulesTable(true);
+        }
+
+        function renderCpeRulesTable(reset) {
+            const body = document.getElementById('cpeRulesBody');
+            if (!body || !currentVendor) return;
+            const rules = reset ? VENDORS[currentVendor].defaultCpeRules : readCpeRulesFromDom();
+            body.innerHTML = '';
+            rules.forEach(r => body.appendChild(makeCpeRuleRow(r)));
+        }
+
+        function makeCpeRuleRow(r) {
+            const tr = document.createElement('tr');
+            tr.className = 'border-t border-slate-100';
+            tr.innerHTML = `
+                <td class="p-1"><select class="cpe-type site-select">
+                    <option value="Branch" ${r.siteType === 'Branch' ? 'selected' : ''}>Branch</option>
+                    <option value="DC/HQ" ${r.siteType === 'DC/HQ' ? 'selected' : ''}>DC / HQ</option>
+                    <option value="Cloud" ${r.siteType === 'Cloud' ? 'selected' : ''}>Cloud</option>
+                </select></td>
+                <td class="p-1"><select class="cpe-feature site-select">
+                    <option value="any" ${r.feature === 'any' ? 'selected' : ''}>Any</option>
+                    <option value="sw" ${r.feature === 'sw' ? 'selected' : ''}>+ Switching only</option>
+                    <option value="cell" ${r.feature === 'cell' ? 'selected' : ''}>+ Cellular only</option>
+                    <option value="both" ${r.feature === 'both' ? 'selected' : ''}>+ Switching &amp; Cellular</option>
+                </select></td>
+                <td class="p-1"><input class="cpe-upto site-input-num" style="width:80px" placeholder="∞" value="${r.upTo ?? ''}"></td>
+                <td class="p-1"><input class="cpe-model site-select" style="width:100%" value="${r.model}"></td>
+                <td class="p-1 text-center"><button onclick="this.closest('tr').remove()" class="text-red-400 font-bold px-1" title="Remove rule">×</button></td>`;
+            return tr;
+        }
+
+        function addCpeRuleRow() {
+            document.getElementById('cpeRulesBody').appendChild(makeCpeRuleRow({ siteType: 'Branch', feature: 'any', upTo: '', model: 'New-Model' }));
+        }
+
+        function previewCpeAssignment() {
+            const body = document.getElementById('cpePreviewBody');
+            const rows = Array.from(document.querySelectorAll('#siteTable tbody tr'));
+            if (rows.length === 0) {
+                body.innerHTML = '<tr><td colspan="7" class="p-3 text-center text-gray-400 italic">No sites in the table yet — add sites in Pillar 2 below first.</td></tr>';
+                return;
+            }
+            let html = '';
+            rows.forEach((row, i) => {
+                const type = row.querySelector('.type-sel')?.value || 'Branch';
+                const city = row.querySelector('.city-sel')?.value || '(unnamed)';
+                const ha = row.querySelector('.ha-sel')?.value || 'N';
+                const isBranch = type === 'Branch';
+                const feats = { switching: isBranch ? (row.querySelector('.feat-sw')?.checked || false) : false, cellular: isBranch ? (row.querySelector('.feat-cell')?.checked || false) : false };
+                let totalBw = 0;
+                row.querySelectorAll('.wan-bw').forEach(inp => {
+                    let val = parseInt((inp.value || '').replace(/[^0-9]/g, '')) || 0;
+                    if (inp.value.toLowerCase().includes('g')) val *= 1000;
+                    totalBw += val;
+                });
+                const model = calculateHardware(type, totalBw, feats);
+                const featLabel = [feats.switching ? 'Switching' : '', feats.cellular ? 'Cellular' : ''].filter(Boolean).join(' + ') || '—';
+                html += `<tr class="border-t border-slate-100">
+                    <td class="p-2">${i + 1}</td>
+                    <td class="p-2 font-semibold">${city}</td>
+                    <td class="p-2">${type}</td>
+                    <td class="p-2">${totalBw} Mbps</td>
+                    <td class="p-2">${featLabel}</td>
+                    <td class="p-2">${ha === 'Y' ? '✓ HA' : '—'}</td>
+                    <td class="p-2 font-mono font-bold text-indigo-700">${model}${ha === 'Y' ? ' ×2' : ''}</td>
+                </tr>`;
+            });
+            body.innerHTML = html;
+        }
+
+        function readCpeRulesFromDom() {
+            return Array.from(document.querySelectorAll('#cpeRulesBody tr')).map(tr => ({
+                siteType: tr.querySelector('.cpe-type').value,
+                feature: tr.querySelector('.cpe-feature').value,
+                upTo: tr.querySelector('.cpe-upto').value.trim() === '' ? '' : parseFloat(tr.querySelector('.cpe-upto').value),
+                model: tr.querySelector('.cpe-model').value.trim() || 'Unnamed-Model'
+            }));
+        }
+
+        function calculateHardware(type, bwMbps, features) {
+            const siteType = normSiteType(type);
+            const rules = readCpeRulesFromDom();
+            for (const r of rules) {
+                if (r.siteType !== siteType) continue;
+                if (r.feature === 'both' && !(features.switching && features.cellular)) continue;
+                if (r.feature === 'sw' && !(features.switching && !features.cellular)) continue;
+                if (r.feature === 'cell' && !(features.cellular && !features.switching)) continue;
+                if (r.upTo === '' || bwMbps <= r.upTo) return r.model;
+            }
+            return VENDORS[currentVendor]?.short + ' CPE';
+        }
+
+        function addSiteRow(data = {}) {
+            const tbody = document.querySelector('#siteTable tbody');
+            const row = document.createElement('tr'); row.className = "hover:bg-slate-50";
+            const type = data.type || "Branch"; const rawCity = data.city || "New Site"; const city = rawCity.replace(/"/g, '');
+            const country = data.country || "UK"; const haVal = (data.ha === true || data.ha === "Y") ? "Y" : "N";
+            const feats = data.feats || { sw: false, cell: false };
+            const mkSel = (opts, val, cls="", chg="") => `<select class="site-select ${cls}" onchange="${chg}">${opts.map(o => `<option ${o===val?'selected':''}>${o}</option>`).join('')}</select>`;
+            const mkWanGroup = (wd) => `<div class="wan-group"><select class="site-select wan-type" style="width:60%">${WAN_TYPES.map(t=>`<option ${t===(wd?.type||'None')?'selected':''}>${t}</option>`).join('')}</select><input type="text" class="site-input-num wan-bw" placeholder="Mbps" value="${wd?.bw||''}"></div>`;
+            row.innerHTML = `
+                <td>${mkSel(['Branch','DC','HQ','Cloud'], type, 'type-sel', 'toggleFeats(this)')}</td>
+                <td><select class="site-select country-sel" onchange="updateRowCities(this)">${Object.keys(LOCATIONS).map(c=>`<option ${c===country?'selected':''}>${c}</option>`).join('')}</select></td>
+                <td><select class="site-select city-sel"><option>${city}</option></select></td>
+                <td><div class="feat-group ${type !== 'Branch' ? 'opacity-25 pointer-events-none' : ''}"><label class="feat-label"><input type="checkbox" class="feat-sw" ${feats.sw||feats.switching?'checked':''}> Switching</label><label class="feat-label"><input type="checkbox" class="feat-cell" ${feats.cell||feats.cellular?'checked':''}> Cellular</label></div></td>
+                <td>${mkWanGroup(data.wan1)}${mkWanGroup(data.wan2)}${mkWanGroup(data.wan3||null)}${mkWanGroup(data.wan4||null)}</td>
+                <td class="text-center"><select class="site-select ha-sel text-center"><option ${haVal==='N'?'selected':''}>N</option><option ${haVal==='Y'?'selected':''}>Y</option></select></td>
+                <td class="text-center"><button onclick="this.closest('tr').remove()" class="text-red-400 font-bold px-2 text-lg">×</button></td>`;
+            tbody.appendChild(row);
+            updateRowCities(row.querySelector('.country-sel'));
+            const citySel = row.querySelector('.city-sel'); const cityOpts = citySel.querySelectorAll('option');
+            const match = Array.from(cityOpts).find(o => o.text.toLowerCase() === city.toLowerCase());
+            if (!match) { const opt = document.createElement('option'); opt.text = city; opt.selected = true; citySel.insertBefore(opt, citySel.firstChild); } else { match.selected = true; }
+        }
+
+        function toggleFeats(selectEl) {
+            const row = selectEl.closest('tr'); const featDiv = row.querySelector('.feat-group');
+            if (selectEl.value === 'Branch') { featDiv.classList.remove('opacity-25', 'pointer-events-none'); }
+            else { featDiv.classList.add('opacity-25', 'pointer-events-none'); row.querySelector('.feat-sw').checked = false; row.querySelector('.feat-cell').checked = false; }
+        }
+        function updateRowCities(el) {
+            const citySel = el.closest('tr').querySelector('.city-sel');
+            citySel.innerHTML = (LOCATIONS[el.value]||[]).map(c=>`<option>${c}</option>`).join('');
+        }
+
+        addSiteRow({ type: 'DC', country: 'UK', city: 'London', wan1: {type: "Internet (DIA)", bw: "1000"}, wan2: {type: "MPLS", bw: "500"}, ha: true });
+        addSiteRow({ type: 'Branch', country: 'Germany', city: 'Munich', wan1: {type: "Internet (DIA)", bw: "100"}, feats: {sw: true, cell: false} });
+
+        async function generateDetailedDiagram(siteList, userCount) {
+            const safe = (s) => (s || '').replace(/["\(\)\[\]{}|<>]/g, '').replace(/\s+/g, ' ').trim();
+            const hubs = siteList.filter(s => ['DC','HQ','Data Center'].includes(s.type));
+            const branches = siteList.filter(s => !['DC','HQ','Data Center'].includes(s.type));
+            const hasLTE = siteList.some(s => s.links?.some(l => l.type?.includes('5G') || l.type?.includes('LTE') || l.type?.includes('Starlink')));
+            let g = `graph ${siteList.length <= 6 ? 'LR' : 'TD'}\n`;
+            let lc = 0; const linkStyles = [];
+
+            const bwLabel = (site) => {
+                const total = (site.links || []).reduce((sum, l) => sum + (isNaN(parseInt(l.bw || 0)) ? 0 : parseInt(l.bw || 0)), 0);
+                if (total >= 1000) return `${(total/1000).toFixed(1)}Gbps`; return total > 0 ? `${total}Mbps` : '';
+            };
+            const nid = (i, suffix='') => `S${i}${suffix}`;
+
+            const vCfg = VENDORS[currentVendor];
+            g += `\n  subgraph SSE ["${vCfg.subgraphLabel}"]\n    direction TB\n    PA(["${vCfg.cloudNodeLabel}"]):::cloud\n`;
+            if (userCount > 0) { g += `    RU(["👤 ${Number(userCount).toLocaleString()} Remote Users\\nGlobalProtect / ZTNA"]):::users\n    RU <-->|"Encrypted Tunnel"| PA\n`; linkStyles.push(`linkStyle ${lc++} stroke:#7c3aed,stroke-width:2px;`); }
+            g += `  end\n\n`;
+
+            if (hubs.length > 0) {
+                g += `  subgraph HUB_LAYER ["🏢 Hub Layer — Data Centers & HQ"]\n    direction TB\n`;
+                hubs.forEach((site) => {
+                    const id = nid(siteList.indexOf(site)); const city = safe(site.city); const hw = safe(site.hardware || 'ION'); const bw = bwLabel(site);
+                    const label = bw ? `${city}\\n${hw}\\n${bw}` : `${city}\\n${hw}`;
+                    if (site.ha === 'Y') { g += `    subgraph HA_${id} ["${city} (HA Cluster)"]\n      ${id}_A([" ${label} — A "]):::hub\n      ${id}_B([" ${label} — B "]):::hub\n      ${id}_A -.-|"Heartbeat"| ${id}_B\n    end\n`; linkStyles.push(`linkStyle ${lc++} stroke:#94a3b8,stroke-width:1px,stroke-dasharray:3 3;`); } 
+                    else { g += `    ${id}([" ${label} "]):::hub\n`; }
+                }); g += `  end\n\n`;
+            }
+
+            if (branches.length > 0) {
+                g += `  subgraph BR_LAYER ["📍 Branch Layer"]\n    direction TB\n`;
+                branches.forEach((site) => {
+                    const id = nid(siteList.indexOf(site)); const city = safe(site.city); const hw = safe(site.hardware || 'ION'); const bw = bwLabel(site);
+                    const label = bw ? `${city}\\n${hw}\\n${bw}` : `${city}\\n${hw}`;
+                    if (site.ha === 'Y') { g += `    subgraph HA_${id} ["${city} (HA)"]\n      ${id}_A["${label} — A"]:::spoke\n      ${id}_B["${label} — B"]:::spoke\n      ${id}_A -.-|"HA"| ${id}_B\n    end\n`; linkStyles.push(`linkStyle ${lc++} stroke:#94a3b8,stroke-width:1px,stroke-dasharray:3 3;`); } 
+                    else { g += `    ${id}["${label}"]:::spoke\n`; }
+                }); g += `  end\n\n`;
+            }
+
+            const hubNodes = hubs.map(s => s.ha === 'Y' ? `${nid(siteList.indexOf(s))}_A` : nid(siteList.indexOf(s)));
+            if (hubNodes.length >= 2) {
+                for (let i = 0; i < hubNodes.length - 1; i++) { g += `  ${hubNodes[i]} <===>|"Backbone\\n(HA/DCI)"| ${hubNodes[i+1]}\n`; linkStyles.push(`linkStyle ${lc++} stroke:#16a34a,stroke-width:3px;`); }
+            }
+
+            const primaryHub = hubNodes[0] || null;
+            siteList.forEach((site) => {
+                const id = nid(siteList.indexOf(site)); const nodeId = site.ha === 'Y' ? `${id}_A` : id;
+                (site.links || []).forEach(l => {
+                    if (!l.type || l.type === 'None') return;
+                    const t = l.type.toLowerCase(); const bwTag = l.bw ? `|"${l.bw}Mbps"| ` : '';
+                    if (t.includes('mpls')) { if (primaryHub && nodeId !== primaryHub) { g += `  ${primaryHub} ===>${bwTag}${nodeId}\n`; linkStyles.push(`linkStyle ${lc++} stroke:#064e3b,stroke-width:3px;`); } } 
+                    else if (t.includes('internet') || t.includes('dia') || t.includes('broadband')) { g += `  ${nodeId} -->${bwTag}PA\n`; linkStyles.push(`linkStyle ${lc++} stroke:#2563eb,stroke-width:2px;`); } 
+                    else if (t.includes('5g') || t.includes('lte') || t.includes('starlink')) { g += `  ${nodeId} -.->${bwTag}PA\n`; linkStyles.push(`linkStyle ${lc++} stroke:#dc2626,stroke-width:2px,stroke-dasharray:5 5;`); }
+                });
+            });
+
+            g += `\n  classDef cloud fill:#ea580c,stroke:#fff,stroke-width:2px,color:#fff,font-weight:bold;\n  classDef users fill:#1d4ed8,stroke:#93c5fd,stroke-width:2px,color:#fff;\n  classDef hub fill:#e2e8f0,stroke:#334155,stroke-width:2px,color:#1e293b,font-weight:bold;\n  classDef spoke fill:#ffffff,stroke:#64748b,stroke-width:1.5px,color:#1e293b;\n`;
+            g += linkStyles.join('\n');
+            document.getElementById('legendLTE').style.display = hasLTE ? 'flex' : 'none';
+            return g;
+        }
+
+        function recalcTCO() {
+            if (!window._tcoRaw) return;
+            const { totCapex, opex1Y, opex3Y, opex5Y, serviceAnnual } = window._tcoRaw;
+
+            const hwDisc  = Math.min(Math.max(parseFloat(document.getElementById('discountCapex')?.value) || 0, 0), 100) / 100;
+            const licDisc = Math.min(Math.max(parseFloat(document.getElementById('discountOpex')?.value)  || 0, 0), 100) / 100;
+
+            const discCapex = totCapex * (1 - hwDisc);
+            const disc1Y = discCapex + (opex1Y * (1 - licDisc)) + serviceAnnual * 1;
+            const disc3Y = discCapex + (opex3Y * (1 - licDisc)) + serviceAnnual * 3;
+            const disc5Y = discCapex + (opex5Y * (1 - licDisc)) + serviceAnnual * 5;
+
+            const raw1Y = totCapex + opex1Y + serviceAnnual * 1;
+            const raw3Y = totCapex + opex3Y + serviceAnnual * 3;
+            const raw5Y = totCapex + opex5Y + serviceAnnual * 5;
+
+            const fmt = (n) => "$" + Math.round(n).toLocaleString();
+            const hasDiscount = hwDisc > 0 || licDisc > 0;
+
+            document.getElementById('totalOpex1Y').innerText = fmt(disc1Y);
+            document.getElementById('totalOpex3Y').innerText = fmt(disc3Y);
+            document.getElementById('totalOpex5Y').innerText = fmt(disc5Y);
+
+            const setSaving = (id, rawVal, discVal) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                if (hasDiscount && rawVal > discVal) {
+                    const saved = rawVal - discVal;
+                    el.innerText = `✓ Save ${fmt(saved)}`;
+                    el.classList.remove('hidden');
+                } else {
+                    el.classList.add('hidden');
+                }
+            };
+            setSaving('saving1Y', raw1Y, disc1Y);
+            setSaving('saving3Y', raw3Y, disc3Y);
+            setSaving('saving5Y', raw5Y, disc5Y);
+        }
+
+        function extractModelToken(model) {
+            if (/virtual|vION|\bVM\b/i.test(model)) return { virtual: true };
+            const m = model.match(/(\d{2,5})([A-Za-z]?)(?!.*\d)/);
+            if (!m) return null;
+            const num = m[1], letter = m[2] || '';
+            return { token: num + letter, variants: [num.padStart(4, '0') + letter, letter + num + letter] };
+        }
+        function searchPriceDb(token, variants) {
+            const patterns = [token, ...(variants || [])].map(t => new RegExp('(^|[^0-9A-Za-z])' + t + '([^0-9A-Za-z]|$)', 'i'));
+            return Object.entries(PRICE_DB).filter(([sku, v]) =>
+                patterns.some(re => re.test(sku) || re.test(v.desc)));
+        }
+        function pickHardwareSku(candidates) {
+            const hwCandidates = candidates.filter(([, v]) => v.hwPrice !== null);
+            let bdl = hwCandidates.find(([sku]) => /BDL/i.test(sku));
+            if (bdl) return bdl;
+            return hwCandidates[0] || null;
+        }
+        function pickSubscriptionSkus(candidates, excludeSku) {
+            return candidates.filter(([sku, v]) => sku !== excludeSku && v.hwPrice === null && !/BDL/i.test(sku) &&
+                (v.p1y !== null || v.p3y !== null || v.p5y !== null));
+        }
+        function buildSdwanBomLines(siteObjects) {
+            const items = []; const warnings = [];
+            siteObjects.forEach(site => {
+                const qty = site.ha === 'Y' ? 2 : 1;
+                const tokenInfo = extractModelToken(site.hardware);
+                let candidates = [];
+                if (tokenInfo && tokenInfo.virtual) {
+                    candidates = Object.entries(PRICE_DB).filter(([sku, v]) => /virtual|vION|\bVM\b/i.test(sku + ' ' + v.desc));
+                } else if (tokenInfo) {
+                    candidates = searchPriceDb(tokenInfo.token, tokenInfo.variants);
+                }
+                if (candidates.length === 0) {
+                    warnings.push(`${site.city} needs "${site.hardware}" — no matching SKU found in the price book`);
+                    items.push({ sku: '', desc: `⚠ No SKU match for ${site.hardware} — ${site.city} (${site.type})`, qty, price: 0, type: 'capex', verified: false });
+                    return;
+                }
+                const hwPick = pickHardwareSku(candidates);
+                if (hwPick) {
+                    items.push({ sku: hwPick[0], desc: `${hwPick[1].desc} — ${site.city} (${site.type}${site.ha === 'Y' ? ', HA pair' : ''})`, qty, price: hwPick[1].hwPrice, type: 'capex', verified: true });
+                } else {
+                    warnings.push(`${site.city} needs "${site.hardware}" — found related SKUs but no hardware (CapEx) price among them`);
+                }
+                pickSubscriptionSkus(candidates, hwPick ? hwPick[0] : null).slice(0, 2).forEach(([sku, v]) => {
+                    if (v.p1y === null && v.p3y === null && v.p5y === null) return;
+                    items.push({ sku, desc: `${v.desc} — ${site.city}`, qty, p1y: v.p1y, p3y: v.p3y, p5y: v.p5y, type: 'opex', verified: true });
+                });
+            });
+            return { items, warnings };
+        }
+
+        async function runGenAI() {
+            const modelName = document.getElementById('modelSelector').value;
+            const btn = document.getElementById('generateBtn');
+            const scope = document.getElementById('designScope').value;
+            const rpt = document.getElementById('reportSection');
+            const tierVal = parseFloat(document.querySelector('input[name="serviceTier"]:checked').value);
+            const supportVal = parseFloat(document.querySelector('input[name="supportRole"]:checked').value);
+            const tierLabel = document.querySelector('input[name="serviceTier"]:checked + div span').innerText;
+            const supportLabel = document.querySelector('input[name="supportRole"]:checked + div span').innerText;
+            const hasServices = (tierVal > 0 || supportVal > 0);
+
+            if (modelName.includes("Wait")) { alert("Click '1. Scan Models' first!"); return; }
+            btn.disabled = true;
+            btn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px;justify-content:center"><span class="loader" style="display:inline-block"></span> Designing...</span>';
+
+            try {
+                const rows = Array.from(document.querySelectorAll('#siteTable tbody tr'));
+                let siteText = ""; let siteObjects = [];
+
+                if (scope !== 'SSE_Only') {
+                    rows.forEach((row, i) => {
+                        const type = row.querySelector('.type-sel').value; const city = row.querySelector('.city-sel').value; const ha = row.querySelector('.ha-sel').value;
+                        const links = []; row.querySelectorAll('.wan-group').forEach(g => { const t = g.querySelector('.wan-type').value; const bw = g.querySelector('.wan-bw').value; if(t!=='None') links.push({type:t, bw}); });
+                        const isBranch = type === 'Branch'; const feats = { switching: isBranch ? row.querySelector('.feat-sw').checked : false, cellular: isBranch ? row.querySelector('.feat-cell').checked : false };
+                        let totalBw = 0; row.querySelectorAll('.wan-bw').forEach(inp => { let val = parseInt(inp.value.replace(/[^0-9]/g, '')) || 0; if(inp.value.toLowerCase().includes('g')) val *= 1000; totalBw += val; });
+                        const hardwareModel = calculateHardware(type, totalBw, feats);
+                        siteObjects.push({ type, city, ha, links, hardware: hardwareModel });
+                        siteText += `Site ${i}: ${city} (${type}) HA:${ha} HW:${hardwareModel} BW:${totalBw}Mbps. `;
+                    });
+                } else { siteText = "N/A (SSE Only)."; }
+
+                const company = document.getElementById('companyName').value;
+                const prismaEdition = document.getElementById('prismaEdition').options[document.getElementById('prismaEdition').selectedIndex].text;
+                const activeAddons = Array.from(document.querySelectorAll('#addonGrid input[type="checkbox"]:checked')).map(cb => cb.value).join(", ");
+                const userCount = document.getElementById('userCount').value;
+                let sseText = (scope !== 'SDWAN_Only') ? `Users: ${userCount}, Edition: ${prismaEdition}, Region: ${document.getElementById('region').value}, Modules: ${activeAddons}` : "N/A.";
+
+                const fileInput = document.getElementById('priceCsv');
+                if (!fileInput.files.length) { alert("Please upload a Price Book (SKU CSV) first — the BoM is generated strictly from it."); btn.disabled = false; btn.innerHTML = "5. Generate SASE Design"; return; }
+                let priceData = await readCsv(fileInput.files[0]);
+                if (!priceData) { alert(`No SKUs in the uploaded price book matched the ${VENDORS[currentVendor].name} SKU pattern. Please check the file or add relevant SKUs.`); btn.disabled = false; btn.innerHTML = "5. Generate SASE Design"; return; }
+                if (priceData.length > 25000) priceData = priceData.substring(0, 25000) + ", ...[TRUNCATED]";
+                const priceContext = `\n\n*** APPROVED SKU LIST (you may ONLY use SKUs from this exact list — do not invent, modify, or substitute SKUs) ***\n${priceData}\n\n`;
+
+                const sdwanResult = (scope !== 'SSE_Only') ? buildSdwanBomLines(siteObjects) : { items: [], warnings: [] };
+
+                const prompt = `Act as a ${VENDORS[currentVendor].name} SASE Architect. Customer: ${company}. SCOPE: ${scope.toUpperCase()}.
+PART 1 — SSE / User Security: ${sseText}
+PART 2 — SD-WAN Sites (context only — do NOT produce BOM lines for these; site hardware & device subscriptions are already priced separately): ${siteText}
+${priceContext}
+INSTRUCTIONS:
+1. Produce BOM lines ONLY for the SSE/user-side: per-user or per-seat subscriptions, the security modules/add-ons selected, and any SASE cloud management or bandwidth licence tied to USER COUNT (not to a specific site's hardware).
+2. Do NOT include any SD-WAN branch/DC/HQ hardware or per-device SKUs in your BOM — that part is handled outside this step. If PART 2 mentions device models, that's for your narrative context only.
+3. Use ONLY SKUs copied verbatim from the APPROVED SKU LIST above — never invent, alter, or guess a plausible-looking SKU.
+4. If no SKU in the list is a reasonable fit for a required line item, OMIT that line rather than inventing one, and mention the gap in "summary".
+5. Split "capex" vs "opex". Use 0 for price and "TBD" for desc (the frontend maps real description/price locally from the SKU).
+OUTPUT JSON: { "title": "...", "summary": "...", "sdwanText": "...", "sseText": "...", "bom": [ {"sku": "...", "desc": "TBD", "qty": 1, "price": 0, "type": "capex"} ] } Return ONLY JSON.`;
+
+                const json = await fetchWithRetry(
+                    () => proxyGenerateContent(modelName, { contents: [{ parts: [{ text: prompt }] }] }),
+                    4, 15000,
+                    (msg) => { btn.innerHTML = `<span style="display:inline-flex;align-items:center;gap:8px;justify-content:center"><span class="loader" style="display:inline-block"></span> ${msg}</span>`; }
+                );
+
+                if (!json.candidates?.[0]?.content?.parts?.[0]?.text) throw new Error(`AI returned no content.`);
+                const design = extractJSON(json.candidates[0].content.parts[0].text);
+
+                rpt.classList.remove('hidden');
+                document.getElementById('outCompany').innerText = company;
+                document.getElementById('coverCompany').innerText = company;
+                document.getElementById('coverGenTool').innerText = VENDORS[currentVendor].navTitle;
+                document.getElementById('legendSseLabel').innerText = VENDORS[currentVendor].sseLabel;
+                document.getElementById('rptSdwanTitle').innerText = VENDORS[currentVendor].sdwanLabel + ' Strategy';
+                document.getElementById('rptSseTitle').innerText = VENDORS[currentVendor].sseLabel + ' Design';
+                document.querySelectorAll('.coverDate').forEach(el => {
+                    el.innerText = new Date().toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
+                });
+                document.getElementById('outSummary').innerHTML = marked.parse(design.summary);
+
+                const rptSdwan = document.getElementById('rptSdwan'); const rptSse = document.getElementById('rptSse');
+                if (scope === 'SSE_Only') rptSdwan.classList.add('hidden-scope'); else { rptSdwan.classList.remove('hidden-scope'); document.getElementById('outSdwan').innerHTML = marked.parse(design.sdwanText); }
+                if (scope === 'SDWAN_Only') rptSse.classList.add('hidden-scope'); else { rptSse.classList.remove('hidden-scope'); document.getElementById('outSse').innerHTML = marked.parse(design.sseText); }
+                document.getElementById('outLicense').innerText = prismaEdition;
+                document.getElementById('outModules').innerText = activeAddons;
+
+                const bomCapex = document.getElementById('outBomCapex'); const bomOpex = document.getElementById('outBomOpex');
+                let totCapex = 0; let totOpex = 0;
+                let capexRows = ''; let opexRows = '';
+                let unmatchedCount = 0;
+                let opex1Y = 0, opex3Y = 0, opex5Y = 0;
+                let termGapCount = 0;
+                const combinedBOM = new Map();
+                sdwanResult.items.forEach(item => {
+                    const key = `${item.sku}|${item.type}|${item.desc}`;
+                    combinedBOM.set(key, item);
+                });
+                design.bom.forEach(item => {
+                    const sku = (item.sku || '').trim();
+                    const rec = PRICE_DB[sku];
+                    const matched = !!rec;
+                    const key = `${sku}|${item.type}`;
+                    if (combinedBOM.has(key)) { combinedBOM.get(key).qty += item.qty; }
+                    else if (matched && item.type === 'capex') {
+                        combinedBOM.set(key, { sku, desc: rec.desc, qty: item.qty, price: rec.hwPrice, type: 'capex', verified: rec.hwPrice !== null });
+                    } else if (matched) {
+                        combinedBOM.set(key, { sku, desc: rec.desc, qty: item.qty, p1y: rec.p1y, p3y: rec.p3y, p5y: rec.p5y, type: 'opex', verified: (rec.p1y !== null || rec.p3y !== null || rec.p5y !== null) });
+                    } else {
+                        combinedBOM.set(key, { sku, desc: item.desc || '(no matching SKU in price book)', qty: item.qty, type: item.type, verified: false });
+                    }
+                });
+                const fmtMoney = (n) => n.toLocaleString(undefined, { minimumFractionDigits: 2 });
+                Array.from(combinedBOM.values()).sort((a, b) => a.type.localeCompare(b.type)).forEach(i => {
+                    if (i.type === 'capex') {
+                        if (i.verified) {
+                            const t = i.qty * i.price;
+                            capexRows += `<tr><td class="font-mono text-xs font-bold">${i.sku}</td><td class="text-xs">${i.desc}</td><td style="text-align:center">${i.qty}</td><td style="text-align:right;color:#16a34a;font-weight:bold">$${fmtMoney(i.price)}</td><td style="text-align:right;font-weight:bold">$${fmtMoney(t)}</td></tr>`;
+                            totCapex += t;
+                        } else {
+                            unmatchedCount++;
+                            capexRows += `<tr class="bg-red-50"><td class="font-mono text-xs font-bold text-red-600">${i.sku || '(blank)'}</td><td class="text-xs text-red-500 italic">⚠ Not in price book (or has no CapEx price) — ${i.desc}</td><td style="text-align:center">${i.qty}</td><td style="text-align:right;color:#dc2626">excluded</td><td style="text-align:right;color:#dc2626">excluded</td></tr>`;
+                        }
+                    } else {
+                        if (i.verified) {
+                            const cell = (v) => {
+                                if (v === null || v === undefined) { termGapCount++; return `<span style="color:#94a3b8">N/A</span>`; }
+                                return `$${fmtMoney(i.qty * v)}`;
+                            };
+                            opexRows += `<tr><td class="font-mono text-xs font-bold">${i.sku}</td><td class="text-xs">${i.desc}</td><td style="text-align:center">${i.qty}</td><td style="text-align:right;font-weight:bold">${cell(i.p1y)}</td><td style="text-align:right;font-weight:bold">${cell(i.p3y)}</td><td style="text-align:right;font-weight:bold">${cell(i.p5y)}</td></tr>`;
+                            if (i.p1y !== null && i.p1y !== undefined) opex1Y += i.qty * i.p1y;
+                            if (i.p3y !== null && i.p3y !== undefined) opex3Y += i.qty * i.p3y;
+                            if (i.p5y !== null && i.p5y !== undefined) opex5Y += i.qty * i.p5y;
+                        } else {
+                            unmatchedCount++;
+                            opexRows += `<tr class="bg-red-50"><td class="font-mono text-xs font-bold text-red-600">${i.sku || '(blank)'}</td><td class="text-xs text-red-500 italic">⚠ Not in price book — ${i.desc}</td><td style="text-align:center">${i.qty}</td><td style="text-align:right;color:#dc2626">excluded</td><td style="text-align:right;color:#dc2626">excluded</td><td style="text-align:right;color:#dc2626">excluded</td></tr>`;
+                        }
+                    }
+                });
+                bomCapex.innerHTML = capexRows;
+                bomOpex.innerHTML = opexRows;
+                document.getElementById('totalCapex').innerText = "$" + totCapex.toLocaleString();
+                document.getElementById('totalOpex1Y_line').innerText = "$" + opex1Y.toLocaleString();
+                document.getElementById('totalOpex3Y_line').innerText = "$" + opex3Y.toLocaleString();
+                document.getElementById('totalOpex5Y_line').innerText = "$" + opex5Y.toLocaleString();
+                if (unmatchedCount > 0 || sdwanResult.warnings.length > 0 || termGapCount > 0) {
+                    let warnHtml = '';
+                    if (unmatchedCount > 0) warnHtml += `⚠ ${unmatchedCount} proposed line item(s) had no matching SKU (or no CapEx price) in the uploaded price book and were excluded from totals.<br/>`;
+                    if (termGapCount > 0) warnHtml += `⚠ ${termGapCount} line/term combination(s) had no price for that specific term in the CSV — shown as N/A, excluded from that term's total only.<br/>`;
+                    if (sdwanResult.warnings.length > 0) warnHtml += `⚠ Site sizing gaps: ${sdwanResult.warnings.join('; ')}.<br/>`;
+                    warnHtml += `A Solution Architect should add the correct SKU(s)/term prices to the price book or adjust the BoM manually.`;
+                    document.getElementById('outSummary').innerHTML += `<div class="mt-3 text-xs font-semibold text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">${warnHtml}</div>`;
+                }
+
+                let totalServiceCost = 0;
+                const rptServices = document.getElementById('rptServices');
+                const outServicesBody = document.getElementById('outServicesBody');
+                let serviceRows = '';
+                if (hasServices) {
+                    rptServices.classList.remove('hidden-scope');
+                    if (tierVal > 0 && !isNaN(opex1Y)) { const c = opex1Y * tierVal; totalServiceCost += c; serviceRows += `<tr><td class="font-bold">Service Tier</td><td>${tierLabel}</td><td class="text-center text-xs text-gray-500">(${tierVal*100}% of 1Y OpEx)</td><td class="text-right font-bold">$${fmtMoney(c)}</td></tr>`; }
+                    if (supportVal > 0 && !isNaN(opex1Y)) { const c = opex1Y * supportVal; totalServiceCost += c; serviceRows += `<tr><td class="font-bold">In-Life Support</td><td>${supportLabel}</td><td class="text-center text-xs text-gray-500">(${supportVal*100}% of 1Y OpEx)</td><td class="text-right font-bold">$${fmtMoney(c)}</td></tr>`; }
+                } else { rptServices.classList.add('hidden-scope'); }
+                outServicesBody.innerHTML = serviceRows;
+                document.getElementById('totalServiceOpex').innerText = "$" + fmtMoney(totalServiceCost);
+
+                document.getElementById('summProdOpex').innerText = "$" + opex1Y.toLocaleString();
+                document.getElementById('summServOpex').innerText = "$" + totalServiceCost.toLocaleString();
+                document.getElementById('summGrandOpex').innerText = "$" + (opex1Y + totalServiceCost).toLocaleString();
+
+                window._tcoRaw = { totCapex, opex1Y, opex3Y, opex5Y, serviceAnnual: totalServiceCost };
+                recalcTCO();
+
+                if (scope !== 'SSE_Only') {
+                    const mermaidContainer = document.getElementById('mermaidContainer');
+                    mermaidContainer.innerHTML = '';
+                    const diag = await generateDetailedDiagram(siteObjects, userCount);
+                    currentDiagramCode = diag;
+                    document.getElementById('rawDiagramCode').textContent = diag;
+
+                    try {
+                        const { svg } = await mermaid.render('mGraph_' + Date.now(), diag);
+                        mermaidContainer.innerHTML = svg;
+                        const svgEl = mermaidContainer.querySelector('svg');
+                        if (svgEl) { svgEl.style.maxWidth = '100%'; svgEl.style.height = 'auto'; svgEl.style.transformOrigin = 'top center'; svgEl.removeAttribute('height'); }
+                    } catch (merr) {
+                        try {
+                            let g = "graph TD\nPA[\"☁ " + VENDORS[currentVendor].short + " SASE\"]:::cloud\n"; if (userCount>0) g+=`RU[\"👤 ${userCount} Users\"]-->PA\n`; siteObjects.forEach((s,i)=>g+=`S${i}[\"${s.city}\"]-->PA\n`);
+                            const { svg } = await mermaid.render('mGraph_fallback_' + Date.now(), g);
+                            mermaidContainer.innerHTML = svg + `<p class="text-amber-600 text-xs mt-2 text-center">⚠ Simplified diagram</p>`;
+                        } catch (e2) { mermaidContainer.innerHTML = `<div class="text-red-500 text-sm">Diagram Error</div>`; }
+                    }
+                } else { document.getElementById('mermaidContainer').innerHTML = "<p class='text-center text-gray-500 italic py-8'>Topology diagram disabled for SSE-Only mode.</p>"; }
+
+                rpt.scrollIntoView({ behavior: 'smooth' });
+
+            } catch (e) { alert("Error: " + e.message); console.error(e); }
+            finally { btn.disabled = false; btn.innerHTML = "5. Generate SASE Design"; }
+        }
+
+        function ppSetStatus(msg) {
+            const statusEl = document.getElementById('proposalStatus'); const loaderEl = statusEl.querySelector('.loader');
+            statusEl.classList.remove('hidden'); statusEl.style.color = ''; 
+            if (loaderEl) loaderEl.style.display = 'inline-block';
+            document.getElementById('proposalStatusText').textContent = msg;
+        }
+
+        function addDarkHeader(pres, slide, title, subtitle, PP) {
+            slide.addShape(pres.shapes.RECTANGLE, { x: 0, y: 0, w: 10, h: 1.1, fill: { color: PP.dark } });
+            slide.addText(title, { x: 0.4, y: 0.08, w: 9.2, h: 0.55, fontSize: 24, bold: true, color: PP.white, fontFace: 'Calibri', margin: 0 });
+            if (subtitle) slide.addText(subtitle, { x: 0.4, y: 0.65, w: 9.2, h: 0.35, fontSize: 11, color: PP.slateC, fontFace: 'Calibri', margin: 0 });
+            slide.addShape(pres.shapes.RECTANGLE, { x: 0, y: 0, w: 0.06, h: 1.1, fill: { color: PP.orange } });
+        }
+
+        function addFooter(pres, slide, company, pageNum, total, PP) {
+            slide.addShape(pres.shapes.RECTANGLE, { x: 0, y: 5.3, w: 10, h: 0.32, fill: { color: PP.slateD } });
+            slide.addText(`Managed SASE Proposal · ${company} · Confidential`, { x: 0.3, y: 5.33, w: 6, h: 0.24, fontSize: 8, color: PP.muted, fontFace: 'Calibri', margin: 0 });
+            slide.addText(`${pageNum} / ${total}`, { x: 9.0, y: 5.33, w: 0.7, h: 0.24, fontSize: 8, color: PP.muted, fontFace: 'Calibri', align: 'right', margin: 0 });
+        }
+
+        function printTechnicalReport() {
+            document.body.classList.add('print-report'); document.body.classList.remove('print-proposal');
+            window.print();
+        }
+        function printProposalPDF() {
+            document.body.classList.add('print-proposal'); document.body.classList.remove('print-report');
+            window.print();
+        }
+
+        async function generateProposalAssets() {
+            const modelName = document.getElementById('modelSelector').value;
+            const btn = document.getElementById('proposalBtn');
+
+            if (modelName.includes('Wait')) { alert("Click '1. Scan Models' first!"); return; }
+
+            const primaryHex = document.getElementById('themePrimary').value.replace('#', '').toUpperCase();
+            const accentHex = document.getElementById('themeAccent').value.replace('#', '').toUpperCase();
+            
+            const PP = { 
+                dark: '0F172A', 
+                orange: accentHex,
+                indigo: primaryHex,
+                light: 'F8FAFC', white: 'FFFFFF', muted: '64748B', green: '16A34A', amber: 'D97706', 
+                teal: '0D9488', violet: '7C3AED', slate2: '1E293B', slateB: '334155', slateC: '94A3B8', slateD: 'E2E8F0' 
+            };
+
+            const includeProb = document.getElementById('chkSlideProb').checked;
+            const includeCases = document.getElementById('chkSlideCases').checked;
+            const includeArch = document.getElementById('chkSlideArch').checked;
+            const includeBom = document.getElementById('chkSlideBom').checked;
+            const includeRoi = document.getElementById('chkSlideRoi').checked;
+            const includeComp = document.getElementById('chkSlideComp').checked;
+            const includeRoadmap = document.getElementById('chkSlideRoadmap').checked;
+
+            btn.disabled = true;
+            document.getElementById('printPdfBtn').classList.add('hidden');
+            ppSetStatus('Step 1/3 — AI mapping architecture to business value...');
+
+            try {
+                const company     = document.getElementById('companyName').value || 'Customer';
+                const industry = document.getElementById('proposalIndustry')?.value || 'Enterprise';
+                const preparedBy  = document.getElementById('proposalPreparedBy').value || 'Solutions Architect';
+                const mspName     = document.getElementById('proposalMspName').value.trim() || 'Our Managed Services';
+                const deckTone    = document.getElementById('proposalTone').value;
+                const manualCtx   = document.getElementById('proposalContext').value.trim();
+                
+                const scope       = document.getElementById('designScope').value;
+                const userCount   = document.getElementById('userCount').value;
+                const region      = document.getElementById('region').value;
+                const edition     = document.getElementById('prismaEdition').options[document.getElementById('prismaEdition').selectedIndex].text;
+                const activeAddons = Array.from(document.querySelectorAll('#addonGrid input[type="checkbox"]:checked')).map(cb => cb.value);
+                const tierLabel   = document.querySelector('input[name="serviceTier"]:checked + div span')?.innerText || 'None';
+                const supportLabel = document.querySelector('input[name="supportRole"]:checked + div span')?.innerText || 'None';
+
+                const rows = Array.from(document.querySelectorAll('#siteTable tbody tr'));
+                const sites = rows.map(row => ({ type: row.querySelector('.type-sel')?.value, city: row.querySelector('.city-sel')?.value, ha: row.querySelector('.ha-sel')?.value }));
+                const sitesSummary = sites.map(s => `${s.city} (${s.type}${s.ha === 'Y' ? ' HA' : ''})`).join(', ');
+
+                const capexStr = document.getElementById('totalCapex')?.innerText || 'TBD';
+                const opexStr  = document.getElementById('totalOpex1Y_line')?.innerText  || 'TBD';
+                const tco1y    = document.getElementById('totalOpex1Y')?.innerText    || 'TBD';
+                const tco3y    = document.getElementById('totalOpex3Y')?.innerText    || 'TBD';
+                const tco5y    = document.getElementById('totalOpex5Y')?.innerText    || 'TBD';
+                const hwDiscPct  = parseFloat(document.getElementById('discountCapex')?.value) || 0;
+                const licDiscPct = parseFloat(document.getElementById('discountOpex')?.value)  || 0;
+                const discountNote = (hwDiscPct > 0 || licDiscPct > 0)
+                    ? ` (incl. ${hwDiscPct}% HW discount, ${licDiscPct}% licence discount)`
+                    : '';
+
+                const toneInstruction = deckTone === 'Executive' 
+                    ? "Focus purely on business outcomes, risk reduction, operational efficiency, zero-trust transformation, and measurable ROI."
+                    : "Focus on technical superiority, architectural resilience, specific features, routing policies, threat prevention, and high-availability.";
+
+                const slidePrompt = `You are a senior Solutions Architect at "${mspName}", a premium Managed Service Provider. Generate a customer-ready proposal for ${company}, a ${industry} company. Pitch this as a fully managed SASE service powered by Palo Alto Networks.
+
+TONE & FOCUS: ${toneInstruction}
+
+CUSTOMER DISCOVERY / PAIN POINTS:
+${manualCtx || 'Infer typical challenges for their industry.'}
+
+DESIGN CONTEXT:
+- Scope: ${scope} | Sites: ${sitesSummary || 'N/A'} | Remote Users: ${userCount}
+- Region: ${region} | Edition: ${edition} | Modules: ${activeAddons.join(', ') || 'Standard'}
+- Service: ${tierLabel} | Support: ${supportLabel}
+- CapEx: ${capexStr} | 1Y OpEx: ${opexStr} | 1Y TCO: ${tco1y} | 3Y TCO: ${tco3y} | 5Y TCO: ${tco5y}${discountNote}
+
+Return ONLY valid JSON. No markdown.
+{
+  "problemStatement": {
+    "headline": "2-sentence executive summary of their core challenge.",
+    "challenges": [ {"title": "...", "desc": "..."} ]
+  },
+  "useCases": [ {"title": "...", "icon": "emoji", "problem": "...", "solution": "...", "module": "..."} ],
+  "executiveSummary": "3-4 sentences value summary of the MSP delivered solution.",
+  "roi": {
+    "headline": "...",
+    "points": [ {"metric": "...", "value": "...", "detail": "..."} ],
+    "paybackPeriod": "e.g. 14 months"
+  },
+  "competitive": {
+    "summary": "...",
+    "comparisons": [ {"category": "...", "prisma": "...", "others": "..."} ]
+  },
+  "roadmap": {
+    "phases": [ {"phase": "Phase 1", "name": "...", "duration": "...", "activities": ["..."], "milestone": "..."} ]
+  },
+  "whyUs": ["...", "...", "..."],
+  "nextSteps": ["...", "...", "...", "..."]
+}`;
+
+                const aiJson = await fetchWithRetry(
+                    () => proxyGenerateContent(modelName, { contents: [{ parts: [{ text: slidePrompt }] }], generationConfig: { temperature: 0.4, maxOutputTokens: 8192 } }),
+                    4, 15000,
+                    (msg) => ppSetStatus(`Step 1/3 — ${msg}`)
+                );
+
+                const candidate = aiJson.candidates?.[0];
+                if (!candidate?.content?.parts?.[0]?.text) throw new Error(`AI returned no content.`);
+                
+                let content;
+                try { content = extractJSON(candidate.content.parts[0].text); } 
+                catch (parseErr) { throw new Error('Could not parse AI response as JSON.'); }
+
+                ppSetStatus('Step 2/3 — Assembling assets...');
+
+                const pres = new PptxGenJS();
+                pres.layout = 'LAYOUT_16x9'; pres.author = preparedBy; pres.title = `Managed SASE Proposal – ${company}`;
+                const TODAY = new Date().toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
+
+                let agendaItems = [];
+                if (includeProb) agendaItems.push({ id: 'prob', title: 'Problem Statement', sub: 'Your current challenges' });
+                if (includeCases) agendaItems.push({ id: 'cases', title: 'Key Use Cases', sub: 'Addressing specific scenarios' });
+                agendaItems.push({ id: 'solution', title: 'Solution Overview', sub: `Managed SASE by ${mspName}` });
+                if (includeArch) agendaItems.push({ id: 'arch', title: 'Architecture Design', sub: 'Topology & integration' });
+                if (includeBom) agendaItems.push({ id: 'bom', title: 'Investment Summary', sub: 'Hardware, licensing & services' });
+                if (includeRoi) agendaItems.push({ id: 'roi', title: 'Business Case & ROI', sub: 'Value & payback period' });
+                if (includeComp) agendaItems.push({ id: 'comp', title: 'Why Us', sub: 'The MSP & Prisma Advantage' });
+                if (includeRoadmap) agendaItems.push({ id: 'roadmap', title: 'Implementation Roadmap', sub: 'Phased delivery plan' });
+
+                const TOTAL_SLIDES = agendaItems.length + 2;
+                let currentSlideNum = 1;
+
+                {
+                    const s = pres.addSlide(); s.background = { color: PP.dark }; currentSlideNum++;
+                    s.addShape(pres.shapes.RECTANGLE, { x: 0, y: 0, w: 3.8, h: 5.625, fill: { color: PP.orange } });
+                    s.addText(mspName.toUpperCase(), { x: 0.3, y: 0.3, w: 3.2, h: 0.8, fontSize: 11, bold: true, color: PP.white, fontFace: 'Calibri', align: 'left', margin: 0 });
+                    
+                    if (customerLogoBase64) {
+                        s.addImage({ data: customerLogoBase64, x: 0.4, y: 1.1, w: 3.0, h: 1.2, sizing: { type: 'contain' } });
+                    } else {
+                        s.addShape(pres.shapes.RECTANGLE, { x: 0.4, y: 1.1, w: 3.0, h: 1.2, fill: { color: 'FFFFFF', transparency: 85 }, line: { color: PP.white, pt: 1, dashType: 'dash' } });
+                        s.addText(`[${company} Logo]`, { x: 0.4, y: 1.1, w: 3.0, h: 1.2, fontSize: 13, color: PP.white, fontFace: 'Calibri', align: 'center', valign: 'middle', margin: 0 });
+                    }
+
+                    s.addText('Managed SASE', { x: 4.1, y: 1.0, w: 5.6, h: 0.8, fontSize: 38, bold: true, color: PP.orange, fontFace: 'Calibri', margin: 0 });
+                    s.addText('Architecture Proposal', { x: 4.1, y: 1.8, w: 5.6, h: 0.65, fontSize: 26, color: PP.white, fontFace: 'Calibri', margin: 0 });
+                    s.addText(`Prepared for: ${company}`, { x: 4.1, y: 2.65, w: 5.6, h: 0.4, fontSize: 16, bold: true, color: PP.slateC, fontFace: 'Calibri', margin: 0 });
+                    s.addText(`Industry: ${industry}`, { x: 4.1, y: 3.1, w: 5.6, h: 0.32, fontSize: 12, color: PP.slateC, fontFace: 'Calibri', margin: 0 });
+                    s.addText(`Prepared by: ${preparedBy}`, { x: 4.1, y: 3.48, w: 5.6, h: 0.3, fontSize: 12, color: PP.slateC, fontFace: 'Calibri', margin: 0 });
+                    s.addText(`Date: ${TODAY}`, { x: 4.1, y: 3.82, w: 5.6, h: 0.3, fontSize: 12, color: PP.slateC, fontFace: 'Calibri', margin: 0 });
+                    s.addText('CONFIDENTIAL', { x: 4.1, y: 4.8, w: 5.6, h: 0.3, fontSize: 9, color: PP.muted, fontFace: 'Calibri', charSpacing: 4, margin: 0 });
+                }
+
+                {
+                    const s = pres.addSlide(); s.background = { color: PP.light };
+                    addDarkHeader(pres, s, 'Agenda', 'What we will cover today', PP);
+                    addFooter(pres, s, company, currentSlideNum++, TOTAL_SLIDES, PP);
+                    agendaItems.forEach((item, i) => {
+                        const col = i % 2 === 0 ? 0 : 1; const row = Math.floor(i / 2);
+                        const bx = col === 0 ? 0.35 : 5.2; const by = 1.35 + row * 0.95;
+                        s.addShape(pres.shapes.RECTANGLE, { x: bx, y: by, w: 4.55, h: 0.78, fill: { color: PP.white }, line: { color: PP.slateD, pt: 1 }, shadow: { type: 'outer', color: '000000', blur: 4, offset: 1, angle: 135, opacity: 0.07 } });
+                        s.addShape(pres.shapes.RECTANGLE, { x: bx, y: by, w: 0.05, h: 0.78, fill: { color: PP.orange } });
+                        s.addText('0' + (i+1), { x: bx + 0.12, y: by + 0.04, w: 0.45, h: 0.35, fontSize: 18, bold: true, color: PP.orange, fontFace: 'Calibri', margin: 0 });
+                        s.addText(item.title, { x: bx + 0.6, y: by + 0.06, w: 3.8, h: 0.3, fontSize: 13, bold: true, color: PP.slate2, fontFace: 'Calibri', margin: 0 });
+                        s.addText(item.sub, { x: bx + 0.6, y: by + 0.4, w: 3.8, h: 0.26, fontSize: 10, color: PP.muted, fontFace: 'Calibri', margin: 0 });
+                    });
+                }
+
+                if (includeProb) {
+                    const s = pres.addSlide(); s.background = { color: PP.light };
+                    addDarkHeader(pres, s, 'Problem Statement', content.problemStatement.headline, PP);
+                    addFooter(pres, s, company, currentSlideNum++, TOTAL_SLIDES, PP);
+                    const cardColors = [PP.orange, PP.indigo, PP.teal, PP.violet];
+                    (content.problemStatement.challenges || []).slice(0, 4).forEach((ch, i) => {
+                        const cx = i % 2 === 0 ? 0.3 : 5.2; const cy = 1.3 + Math.floor(i / 2) * 1.8;
+                        s.addShape(pres.shapes.RECTANGLE, { x: cx, y: cy, w: 4.6, h: 1.55, fill: { color: PP.white }, line: { color: PP.slateD, pt: 1 }, shadow: { type: 'outer', color: '000000', blur: 5, offset: 2, angle: 135, opacity: 0.08 } });
+                        s.addShape(pres.shapes.RECTANGLE, { x: cx, y: cy, w: 4.6, h: 0.3, fill: { color: cardColors[i] } });
+                        s.addText(ch.title, { x: cx + 0.12, y: cy + 0.04, w: 4.3, h: 0.24, fontSize: 11, bold: true, color: PP.white, fontFace: 'Calibri', margin: 0 });
+                        s.addText(ch.desc, { x: cx + 0.12, y: cy + 0.38, w: 4.3, h: 1.1, fontSize: 10, color: PP.slate2, fontFace: 'Calibri', margin: 0, valign: 'top' });
+                    });
+                }
+
+                if (includeCases) {
+                    const s = pres.addSlide(); s.background = { color: PP.light };
+                    addDarkHeader(pres, s, 'Key Use Cases', `Addressing specific scenarios for ${company}`, PP);
+                    addFooter(pres, s, company, currentSlideNum++, TOTAL_SLIDES, PP);
+                    const ucColors = [PP.orange, PP.indigo, PP.teal, PP.violet, PP.green, PP.amber];
+                    (content.useCases || []).slice(0, 6).forEach((uc, i) => {
+                        const cx = 0.25 + (i % 3) * 3.2; const cy = 1.25 + Math.floor(i / 3) * 2.0;
+                        s.addShape(pres.shapes.RECTANGLE, { x: cx, y: cy, w: 3.0, h: 1.75, fill: { color: PP.white }, line: { color: PP.slateD, pt: 1 }, shadow: { type: 'outer', color: '000000', blur: 4, offset: 1, angle: 135, opacity: 0.07 } });
+                        s.addShape(pres.shapes.RECTANGLE, { x: cx, y: cy, w: 3.0, h: 0.08, fill: { color: ucColors[i] } });
+                        s.addText((uc.icon || '🔒') + ' ' + uc.title, { x: cx + 0.1, y: cy + 0.15, w: 2.8, h: 0.3, fontSize: 11, bold: true, color: PP.slate2, fontFace: 'Calibri', margin: 0 });
+                        s.addText('Problem: ' + uc.problem, { x: cx + 0.1, y: cy + 0.5, w: 2.8, h: 0.45, fontSize: 9, color: PP.muted, fontFace: 'Calibri', margin: 0, italic: true });
+                        s.addText('✓ ' + uc.solution, { x: cx + 0.1, y: cy + 0.98, w: 2.8, h: 0.45, fontSize: 9, color: ucColors[i], fontFace: 'Calibri', bold: true, margin: 0 });
+                        s.addText(uc.module, { x: cx + 0.1, y: cy + 1.52, w: 2.8, h: 0.18, fontSize: 7.5, color: PP.slateC, fontFace: 'Calibri', margin: 0, italic: true });
+                    });
+                }
+
+                {
+                    const s = pres.addSlide(); s.background = { color: PP.light };
+                    addDarkHeader(pres, s, 'Solution Overview', `Managed Prisma SASE delivered by ${mspName}`, PP);
+                    addFooter(pres, s, company, currentSlideNum++, TOTAL_SLIDES, PP);
+                    s.addShape(pres.shapes.RECTANGLE, { x: 0.3, y: 1.25, w: 4.55, h: 3.85, fill: { color: PP.dark }, line: { color: PP.dark, pt: 0 } });
+                    s.addText('PRISMA ACCESS\n(SSE)', { x: 0.4, y: 1.35, w: 4.35, h: 0.5, fontSize: 13, bold: true, color: PP.orange, fontFace: 'Calibri', margin: 0 });
+                    ['Zero Trust Network Access (ZTNA)', 'Secure Web Gateway (SWG)', 'Cloud Access Security Broker (CASB)', 'AI-powered Threat Prevention', 'Data Loss Prevention (DLP)'].forEach((item, i) => {
+                        s.addText('▸  ' + item, { x: 0.45, y: 1.95 + i * 0.48, w: 4.25, h: 0.4, fontSize: 10, color: PP.white, fontFace: 'Calibri', margin: 0 });
+                    });
+                    s.addShape(pres.shapes.RECTANGLE, { x: 5.15, y: 1.25, w: 4.55, h: 3.85, fill: { color: PP.slateB }, line: { color: PP.slateB, pt: 0 } });
+                    s.addText('PRISMA SD-WAN', { x: 5.25, y: 1.35, w: 4.35, h: 0.5, fontSize: 13, bold: true, color: PP.teal, fontFace: 'Calibri', margin: 0 });
+                    ['AI-native WAN fabric', 'Application-aware routing', 'Automated branch deployment', 'HA & multi-path resilience', 'Integrated with Strata Cloud Manager'].forEach((item, i) => {
+                        s.addText('▸  ' + item, { x: 5.3, y: 1.95 + i * 0.48, w: 4.25, h: 0.4, fontSize: 10, color: PP.white, fontFace: 'Calibri', margin: 0 });
+                    });
+                    s.addText('+ FULLY\nMANAGED', { x: 4.55, y: 2.8, w: 0.9, h: 0.7, fontSize: 8.5, bold: true, color: PP.orange, fontFace: 'Calibri', align: 'center', valign: 'middle', margin: 0 });
+                    s.addShape(pres.shapes.RECTANGLE, { x: 0.3, y: 5.1, w: 9.4, h: 0.22, fill: { color: PP.orange, transparency: 80 } });
+                    s.addText(content.executiveSummary || `Prisma SASE delivers unified Zero Trust security and SD-WAN, managed end-to-end by ${mspName}.`, { x: 0.4, y: 5.12, w: 9.2, h: 0.18, fontSize: 8, color: PP.slate2, fontFace: 'Calibri', italic: true, margin: 0 });
+                }
+
+                if (includeArch) {
+                    const s = pres.addSlide(); s.background = { color: PP.light };
+                    addDarkHeader(pres, s, 'Architecture Design', `${scope} topology — ${sites.length} site(s), ${userCount} remote users`, PP);
+                    addFooter(pres, s, company, currentSlideNum++, TOTAL_SLIDES, PP);
+                    [{ label: 'Design Scope', val: scope.replace('_', ' ') }, { label: 'Sites', val: String(sites.length) }, { label: 'Remote Users', val: userCount }, { label: 'Region', val: region }, { label: 'Edition', val: edition.split(' ').slice(0,2).join(' ') }, { label: 'HA Pairs', val: String(sites.filter(s => s.ha === 'Y').length) }].forEach((item, i) => {
+                        const cx = 0.3 + (i % 3) * 3.15; const cy = 1.28 + Math.floor(i / 3) * 0.82;
+                        s.addShape(pres.shapes.RECTANGLE, { x: cx, y: cy, w: 2.9, h: 0.68, fill: { color: PP.white }, line: { color: PP.slateD, pt: 1 } });
+                        s.addShape(pres.shapes.RECTANGLE, { x: cx, y: cy, w: 2.9, h: 0.05, fill: { color: PP.indigo } });
+                        s.addText(item.label.toUpperCase(), { x: cx + 0.1, y: cy + 0.1, w: 2.7, h: 0.2, fontSize: 7.5, color: PP.muted, fontFace: 'Calibri', charSpacing: 1, margin: 0 });
+                        s.addText(item.val, { x: cx + 0.1, y: cy + 0.32, w: 2.7, h: 0.28, fontSize: 14, bold: true, color: PP.slate2, fontFace: 'Calibri', margin: 0 });
+                    });
+                    const tableData = [
+                        [{ text: 'Site', options: { bold: true, fill: { color: PP.dark }, color: PP.white, fontSize: 9, fontFace: 'Calibri' } }, { text: 'Type', options: { bold: true, fill: { color: PP.dark }, color: PP.white, fontSize: 9, fontFace: 'Calibri' } }, { text: 'HA', options: { bold: true, fill: { color: PP.dark }, color: PP.white, fontSize: 9, fontFace: 'Calibri' } }],
+                        ...sites.slice(0, 8).map(site => [{ text: site.city || '', options: { fontSize: 9, fontFace: 'Calibri', color: PP.slate2 } }, { text: site.type || '', options: { fontSize: 9, fontFace: 'Calibri', color: PP.slate2 } }, { text: site.ha === 'Y' ? '✓' : '–', options: { fontSize: 9, fontFace: 'Calibri', color: site.ha === 'Y' ? PP.green : PP.slateC, bold: site.ha === 'Y' } }])
+                    ];
+                    s.addTable(tableData, { x: 0.3, y: 2.95, w: 5.0, h: Math.min(2.1, 0.3 + sites.slice(0,8).length * 0.28 + 0.3), border: { pt: 0.5, color: PP.slateD }, fontFace: 'Calibri' });
+                    s.addShape(pres.shapes.RECTANGLE, { x: 5.5, y: 2.95, w: 4.1, h: 2.1, fill: { color: PP.dark }, line: { color: PP.slateB, pt: 1 } });
+                    s.addText('🔒  Prisma Access\n    (SSE Cloud)', { x: 5.65, y: 3.05, w: 3.8, h: 0.5, fontSize: 10, bold: true, color: PP.orange, fontFace: 'Calibri', margin: 0 });
+                    s.addText(sites.slice(0,4).map(st => `[${st.type}] ${st.city}`).join('\n'), { x: 5.65, y: 3.6, w: 3.8, h: 1.0, fontSize: 9, color: PP.slateC, fontFace: 'Calibri', margin: 0 });
+                    s.addText('▲ See full generated diagram in PDF', { x: 5.65, y: 4.7, w: 3.8, h: 0.25, fontSize: 8, color: PP.muted, italic: true, fontFace: 'Calibri', margin: 0 });
+                    s.addShape(pres.shapes.RECTANGLE, { x: 5.5, y: 4.65, w: 4.1, h: 0.06, fill: { color: PP.orange } });
+                }
+
+                if (includeBom) {
+                    const s = pres.addSlide(); s.background = { color: PP.light };
+                    addDarkHeader(pres, s, 'Investment Summary', 'Hardware, licensing & managed services', PP);
+                    addFooter(pres, s, company, currentSlideNum++, TOTAL_SLIDES, PP);
+                    [{ label: 'Total CapEx', val: capexStr, color: PP.indigo }, { label: '1-Year TCO', val: tco1y, color: PP.teal }, { label: '3-Year TCO', val: tco3y, color: PP.orange }, { label: '5-Year TCO', val: tco5y, color: PP.violet }].forEach((card, i) => {
+                        const cx = 0.3 + i * 2.38;
+                        s.addShape(pres.shapes.RECTANGLE, { x: cx, y: 1.3, w: 2.1, h: 0.9, fill: { color: card.color } });
+                        s.addText(card.label.toUpperCase(), { x: cx + 0.1, y: 1.35, w: 1.9, h: 0.24, fontSize: 8, color: PP.white, fontFace: 'Calibri', charSpacing: 1, bold: true, margin: 0 });
+                        s.addText(card.val, { x: cx + 0.1, y: 1.6, w: 1.9, h: 0.5, fontSize: 17, bold: true, color: PP.white, fontFace: 'Calibri', margin: 0, valign: 'middle' });
+                    });
+                    const capexRows = []; document.querySelectorAll('#outBomCapex tr').forEach(tr => { const c = Array.from(tr.querySelectorAll('td')); if (c.length >= 5) capexRows.push(c.map(td => td.innerText.trim())); });
+                    const opexRows = []; document.querySelectorAll('#outBomOpex tr').forEach(tr => { const c = Array.from(tr.querySelectorAll('td')); if (c.length >= 6) opexRows.push(c.map(td => td.innerText.trim())); });
+                    const buildBomTable = (rows, startY, sectionLabel, headers, colW, rightAlignFrom) => {
+                        if (rows.length === 0) return;
+                        s.addText(sectionLabel, { x: 0.3, y: startY - 0.22, w: 9.4, h: 0.2, fontSize: 8, bold: true, color: PP.muted, fontFace: 'Calibri', charSpacing: 1, margin: 0 });
+                        const hdr = headers.map((h, ci) => ({ text: h, options: { bold: true, fill: { color: PP.dark }, color: PP.white, fontSize: 8, fontFace: 'Calibri', align: ci >= rightAlignFrom ? 'right' : (ci === 2 ? 'center' : 'left') } }));
+                        const tblData = [hdr, ...rows.slice(0, 6).map((r, ri) => headers.map((h, ci) => ({
+                            text: r[ci] || '', options: { fontSize: 8, fontFace: 'Calibri', color: ci === headers.length - 1 ? PP.slate2 : PP.muted, bold: ci >= rightAlignFrom, align: ci >= rightAlignFrom ? 'right' : (ci === 2 ? 'center' : 'left'), fill: { color: ri % 2 === 0 ? PP.white : PP.light } }
+                        })))];
+                        s.addTable(tblData, { x: 0.3, y: startY, w: 9.4, border: { pt: 0.5, color: PP.slateD }, colW });
+                    };
+                    const capexHeaders = ['SKU', 'Description', 'Qty', 'Unit Price', 'Total'];
+                    const capexColW = [1.5, 3.9, 0.6, 1.5, 1.5];
+                    const opexHeaders = ['SKU', 'Description', 'Qty', '1Y Total', '3Y Total', '5Y Total'];
+                    const opexColW = [1.3, 3.0, 0.5, 1.53, 1.53, 1.54];
+                    if (capexRows.length > 0 && opexRows.length > 0) { buildBomTable(capexRows, 2.35, 'HARDWARE (CAPEX — ONE TIME)', capexHeaders, capexColW, 3); buildBomTable(opexRows, 3.65, 'SUBSCRIPTIONS (OPEX — CONTRACT TERM TOTALS)', opexHeaders, opexColW, 3); }
+                    else if (capexRows.length > 0) buildBomTable(capexRows, 2.35, 'HARDWARE (CAPEX — ONE TIME)', capexHeaders, capexColW, 3);
+                    else if (opexRows.length > 0) buildBomTable(opexRows, 2.35, 'SUBSCRIPTIONS (OPEX — CONTRACT TERM TOTALS)', opexHeaders, opexColW, 3);
+                    else s.addText('Run Step 5 "Generate SASE Design" first to populate the BoM.', { x: 0.5, y: 2.5, w: 9, h: 0.5, fontSize: 13, color: PP.muted, italic: true, fontFace: 'Calibri' });
+                }
+
+                if (includeRoi) {
+                    const s = pres.addSlide(); s.background = { color: PP.light };
+                    addDarkHeader(pres, s, 'Business Case & ROI', content.roi?.headline || 'Measurable value from day one', PP);
+                    addFooter(pres, s, company, currentSlideNum++, TOTAL_SLIDES, PP);
+                    s.addShape(pres.shapes.RECTANGLE, { x: 7.4, y: 1.25, w: 2.25, h: 0.8, fill: { color: PP.green } });
+                    s.addText('PAYBACK\nPERIOD', { x: 7.45, y: 1.28, w: 2.15, h: 0.28, fontSize: 7.5, bold: true, color: PP.white, fontFace: 'Calibri', align: 'center', charSpacing: 1, margin: 0 });
+                    s.addText(content.roi?.paybackPeriod || '< 18 months', { x: 7.45, y: 1.57, w: 2.15, h: 0.42, fontSize: 15, bold: true, color: PP.white, fontFace: 'Calibri', align: 'center', margin: 0 });
+                    (content.roi?.points || []).slice(0, 4).forEach((pt, i) => {
+                        const cx = i % 2 === 0 ? 0.3 : 4.0; const cy = 1.25 + Math.floor(i / 2) * 1.75;
+                        s.addShape(pres.shapes.RECTANGLE, { x: cx, y: cy, w: 3.45, h: 1.55, fill: { color: PP.white }, line: { color: PP.slateD, pt: 1 }, shadow: { type: 'outer', color: '000000', blur: 5, offset: 1, angle: 135, opacity: 0.07 } });
+                        s.addShape(pres.shapes.RECTANGLE, { x: cx, y: cy, w: 0.05, h: 1.55, fill: { color: PP.green } });
+                        s.addText(pt.metric, { x: cx + 0.18, y: cy + 0.1, w: 3.15, h: 0.28, fontSize: 10, bold: true, color: PP.slate2, fontFace: 'Calibri', margin: 0 });
+                        s.addText(pt.value, { x: cx + 0.18, y: cy + 0.42, w: 3.15, h: 0.5, fontSize: 22, bold: true, color: PP.green, fontFace: 'Calibri', margin: 0 });
+                        s.addText(pt.detail, { x: cx + 0.18, y: cy + 0.98, w: 3.15, h: 0.48, fontSize: 9, color: PP.muted, fontFace: 'Calibri', margin: 0 });
+                    });
+                    s.addChart(pres.charts.BAR, [{ name: 'TCO', labels: ['CapEx', '1-Year TCO', '3-Year TCO', '5-Year TCO'], values: [parseFloat((capexStr||'0').replace(/[$,]/g, ''))||50000, parseFloat((tco1y||'0').replace(/[$,]/g, ''))||80000, parseFloat((tco3y||'0').replace(/[$,]/g, ''))||240000, parseFloat((tco5y||'0').replace(/[$,]/g, ''))||400000] }], { x: 7.4, y: 2.1, w: 2.25, h: 3.1, barDir: 'col', chartColors: [PP.indigo, PP.teal, PP.orange, PP.violet], chartArea: { fill: { color: PP.light }, roundedCorners: true }, catAxisLabelColor: PP.muted, valAxisLabelColor: PP.muted, valGridLine: { color: PP.slateD, size: 0.5 }, catGridLine: { style: 'none' }, showLegend: false, showValue: false, dataLabelColor: PP.slate2, fontSize: 8, showTitle: false });
+                }
+
+                if (includeComp) {
+                    const s = pres.addSlide(); s.background = { color: PP.light };
+                    addDarkHeader(pres, s, 'Why Us', content.competitive?.summary || 'The only truly unified SASE platform', PP);
+                    addFooter(pres, s, company, currentSlideNum++, TOTAL_SLIDES, PP);
+                    s.addShape(pres.shapes.RECTANGLE, { x: 0.3, y: 1.25, w: 3.3, h: 0.38, fill: { color: PP.slateD } });
+                    s.addShape(pres.shapes.RECTANGLE, { x: 3.7, y: 1.25, w: 2.95, h: 0.38, fill: { color: PP.dark } });
+                    s.addShape(pres.shapes.RECTANGLE, { x: 6.75, y: 1.25, w: 2.95, h: 0.38, fill: { color: PP.slateB } });
+                    s.addText('CAPABILITY', { x: 0.4, y: 1.3, w: 3.1, h: 0.28, fontSize: 9, bold: true, color: PP.muted, fontFace: 'Calibri', charSpacing: 2, margin: 0 });
+                    s.addText(`✓  ${mspName.toUpperCase()} + PRISMA`, { x: 3.75, y: 1.3, w: 2.85, h: 0.28, fontSize: 9, bold: true, color: PP.orange, fontFace: 'Calibri', margin: 0 });
+                    s.addText('✗  OTHERS', { x: 6.8, y: 1.3, w: 2.85, h: 0.28, fontSize: 9, bold: true, color: PP.slateC, fontFace: 'Calibri', margin: 0 });
+                    (content.competitive?.comparisons || []).slice(0, 5).forEach((row, i) => {
+                        const ry = 1.63 + i * 0.65; const fill = i % 2 === 0 ? PP.white : PP.light;
+                        s.addShape(pres.shapes.RECTANGLE, { x: 0.3, y: ry, w: 3.3, h: 0.6, fill: { color: fill }, line: { color: PP.slateD, pt: 0.5 } }); s.addShape(pres.shapes.RECTANGLE, { x: 3.7, y: ry, w: 2.95, h: 0.6, fill: { color: fill }, line: { color: PP.slateD, pt: 0.5 } }); s.addShape(pres.shapes.RECTANGLE, { x: 6.75, y: ry, w: 2.95, h: 0.6, fill: { color: fill }, line: { color: PP.slateD, pt: 0.5 } });
+                        s.addText(row.category, { x: 0.4, y: ry + 0.08, w: 3.1, h: 0.45, fontSize: 10, bold: true, color: PP.slate2, fontFace: 'Calibri', margin: 0 }); s.addText(row.prisma, { x: 3.78, y: ry + 0.08, w: 2.77, h: 0.45, fontSize: 9, color: PP.green, fontFace: 'Calibri', margin: 0 }); s.addText(row.others, { x: 6.83, y: ry + 0.08, w: 2.77, h: 0.45, fontSize: 9, color: PP.muted, fontFace: 'Calibri', italic: true, margin: 0 });
+                    });
+                    s.addShape(pres.shapes.RECTANGLE, { x: 0.3, y: 4.95, w: 9.4, h: 0.38, fill: { color: PP.orange, transparency: 15 } });
+                    const wpText = (content.whyUs || []).slice(0, 4).join('   ·   ');
+                    s.addText('★  ' + wpText, { x: 0.4, y: 5.0, w: 9.2, h: 0.28, fontSize: 9, bold: true, color: PP.white, fontFace: 'Calibri', margin: 0 });
+                }
+
+                if (includeRoadmap) {
+                    const s = pres.addSlide(); s.background = { color: PP.light };
+                    addDarkHeader(pres, s, 'Implementation Roadmap', 'Phased delivery — from foundation to full optimisation', PP);
+                    addFooter(pres, s, company, currentSlideNum++, TOTAL_SLIDES, PP);
+                    const phColors = [PP.indigo, PP.orange, PP.teal];
+                    (content.roadmap?.phases || []).slice(0, 3).forEach((ph, i) => {
+                        const cx = 0.3 + i * 3.2;
+                        s.addShape(pres.shapes.RECTANGLE, { x: cx, y: 1.3, w: 2.95, h: 3.85, fill: { color: PP.white }, line: { color: PP.slateD, pt: 1 }, shadow: { type: 'outer', color: '000000', blur: 5, offset: 1, angle: 135, opacity: 0.07 } });
+                        s.addShape(pres.shapes.RECTANGLE, { x: cx, y: 1.3, w: 2.95, h: 0.52, fill: { color: phColors[i] } });
+                        s.addText(ph.phase + ' · ' + ph.name, { x: cx + 0.1, y: 1.35, w: 2.75, h: 0.24, fontSize: 11, bold: true, color: PP.white, fontFace: 'Calibri', margin: 0 });
+                        s.addText(ph.duration, { x: cx + 0.1, y: 1.6, w: 2.75, h: 0.2, fontSize: 9, color: PP.white, fontFace: 'Calibri', italic: true, margin: 0 });
+                        (ph.activities || []).slice(0, 5).forEach((act, ai) => { s.addText('▸  ' + act, { x: cx + 0.1, y: 1.95 + ai * 0.48, w: 2.75, h: 0.42, fontSize: 9.5, color: PP.slate2, fontFace: 'Calibri', margin: 0 }); });
+                        s.addShape(pres.shapes.RECTANGLE, { x: cx, y: 4.85, w: 2.95, h: 0.3, fill: { color: phColors[i], transparency: 80 } });
+                        s.addText('🏁  ' + ph.milestone, { x: cx + 0.08, y: 4.88, w: 2.79, h: 0.24, fontSize: 8.5, bold: true, color: phColors[i], fontFace: 'Calibri', margin: 0 });
+                    });
+                    (content.nextSteps || []).slice(0, 4).forEach((step, i) => {
+                        s.addShape(pres.shapes.RECTANGLE, { x: 0.3 + i * 2.38, y: 5.25, w: 2.1, h: 0.27, fill: { color: PP.dark } });
+                        s.addText(`${i + 1}. ${step}`, { x: 0.35 + i * 2.38, y: 5.27, w: 2.0, h: 0.22, fontSize: 8, color: PP.white, fontFace: 'Calibri', margin: 0 });
+                    });
+                    if ((content.nextSteps || []).length > 0) s.addText('NEXT STEPS', { x: 9.1, y: 5.27, w: 0.75, h: 0.22, fontSize: 7.5, bold: true, color: PP.orange, fontFace: 'Calibri', align: 'right', charSpacing: 1, margin: 0 });
+                }
+
+                ppSetStatus('Step 3/3 — Saving files...');
+                
+                document.getElementById('pdfCompanyLabel').innerText = company;
+                document.getElementById('pdfMspLabel').innerText = mspName;
+                document.getElementById('pdfAuthorLabel').innerText = preparedBy;
+                
+                document.getElementById('pdfCoverBanner').style.borderColor = `#${primaryHex}`;
+                document.getElementById('pdfCompanySubtitle').style.color = `#${primaryHex}`;
+
+                const pdfContent = document.getElementById('pdfContentContainer');
+                pdfContent.innerHTML = ''; 
+
+                const addHTMLSection = (title, bodyHtml) => {
+                    pdfContent.innerHTML += `
+                        <div class="page-break-inside-avoid mb-10">
+                            <h3 class="text-2xl font-bold text-slate-800 border-b-2 pb-2 mb-4 flex items-center gap-3" style="border-color: #${primaryHex}40;">
+                                <span class="w-3 h-8 inline-block rounded" style="background-color: #${primaryHex}"></span> ${title}
+                            </h3>
+                            <div class="text-gray-700 leading-relaxed">${bodyHtml}</div>
+                        </div>`;
+                };
+
+                if (includeProb) {
+                    let probHtml = `<p class="font-bold text-lg mb-3" style="color: #${primaryHex}">${content.problemStatement.headline}</p><ul class="list-disc pl-6 space-y-3">`;
+                    content.problemStatement.challenges.forEach(c => probHtml += `<li><strong>${c.title}:</strong> ${c.desc}</li>`);
+                    probHtml += `</ul>`; addHTMLSection('Problem Statement', probHtml);
+                }
+                if (includeCases) {
+                    let ucHtml = `<div class="grid grid-cols-2 gap-6 mt-4">`;
+                    content.useCases.forEach(uc => ucHtml += `<div class="bg-slate-50 p-4 rounded border border-slate-200"><h4 class="font-bold mb-1" style="color: #${primaryHex}">${uc.icon} ${uc.title}</h4><p class="text-sm italic text-gray-500 mb-2">${uc.problem}</p><p class="text-sm font-semibold mb-2" style="color: #${accentHex}">✓ ${uc.solution}</p><p class="text-xs text-gray-400">${uc.module}</p></div>`);
+                    ucHtml += `</div>`; addHTMLSection('Key Use Cases', ucHtml);
+                }
+                addHTMLSection('Solution Overview', `<p class="text-lg text-slate-800 mb-4">${content.executiveSummary}</p><p>Prisma SASE combines networking (SD-WAN) and security (SSE) into a single unified platform. <strong>${mspName}</strong> wraps this powerful technology with full lifecycle management, deployment, and ongoing support.</p>`);
+                
+                if (includeArch) {
+                    let archHtml = `<p class="mb-4">Proposed Architecture for ${sites.length} sites and ${userCount} remote users.</p>`;
+                    const svgEl = document.querySelector('#mermaidContainer svg');
+                    if (svgEl) {
+                        archHtml += `<div class="border p-6 bg-slate-50 rounded-xl shadow-sm w-full overflow-hidden flex justify-center">${svgEl.outerHTML}</div>`;
+                    } else {
+                        archHtml += `<p class="italic text-gray-500 p-4 bg-yellow-50 rounded border border-yellow-200">Please generate the Technical Prisma Design (Step 5) first to include the topology diagram here.</p>`;
+                    }
+                    addHTMLSection('Architecture Design', archHtml);
+                }
+
+                if (includeBom) {
+                    let bomHtml = `<p class="mb-4">High level investment summary. Please see detailed BoM spreadsheet for exact SKU breakdown.</p>`;
+                    const discBomNote = (hwDiscPct > 0 || licDiscPct > 0)
+                        ? `<p class="mb-4 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-3 py-2">✓ Discounted pricing applied: ${hwDiscPct > 0 ? hwDiscPct + '% hardware' : ''}${hwDiscPct > 0 && licDiscPct > 0 ? ' + ' : ''}${licDiscPct > 0 ? licDiscPct + '% licence' : ''}.</p>`
+                        : '';
+                    bomHtml += discBomNote;
+                    bomHtml += `<div class="grid grid-cols-4 gap-4 mb-6 text-center">
+                        <div class="bg-slate-50 border p-3 rounded" style="border-color: #${primaryHex}40"><div class="text-xs font-bold uppercase" style="color: #${primaryHex}">CapEx</div><div class="text-xl font-bold" style="color: #${primaryHex}">${capexStr}</div></div>
+                        <div class="bg-slate-50 border p-3 rounded" style="border-color: #${accentHex}40"><div class="text-xs font-bold uppercase" style="color: #${accentHex}">1-Year TCO</div><div class="text-xl font-bold" style="color: #${accentHex}">${tco1y}</div></div>
+                        <div class="bg-slate-50 border p-3 rounded" style="border-color: #${accentHex}40"><div class="text-xs font-bold uppercase" style="color: #${accentHex}">3-Year TCO</div><div class="text-xl font-bold" style="color: #${accentHex}">${tco3y}</div></div>
+                        <div class="bg-slate-50 border p-3 rounded" style="border-color: #${accentHex}40"><div class="text-xs font-bold uppercase" style="color: #${accentHex}">5-Year TCO</div><div class="text-xl font-bold" style="color: #${accentHex}">${tco5y}</div></div>
+                    </div>`;
+                    addHTMLSection('Investment Summary', bomHtml);
+                }
+
+                if (includeRoi) {
+                    let roiHtml = `<p class="font-bold text-lg mb-2" style="color: #${accentHex}">${content.roi.headline}</p><p class="mb-6">Estimated Payback Period: <span class="font-bold px-2 py-1 rounded" style="background-color: #${accentHex}20; color: #${accentHex}">${content.roi.paybackPeriod}</span></p><div class="grid grid-cols-2 gap-4">`;
+                    content.roi.points.forEach(pt => roiHtml += `<div class="border-l-4 pl-4 py-2" style="border-color: #${primaryHex}"><p class="text-xs font-bold text-gray-500 uppercase">${pt.metric}</p><p class="text-2xl font-bold text-slate-800">${pt.value}</p><p class="text-sm text-gray-600 mt-1">${pt.detail}</p></div>`);
+                    roiHtml += `</div>`; addHTMLSection('Business Case & ROI', roiHtml);
+                }
+                
+                if (includeRoadmap) {
+                    let rmHtml = `<div class="space-y-4">`;
+                    content.roadmap.phases.forEach(ph => {
+                        rmHtml += `<div class="bg-slate-50 p-4 border border-slate-200 rounded">
+                            <h4 class="font-bold text-lg" style="color: #${primaryHex}">${ph.phase}: ${ph.name} <span class="text-sm font-normal text-gray-500 ml-2">(${ph.duration})</span></h4>
+                            <ul class="list-disc pl-5 mt-2 space-y-1 text-sm text-slate-700">`;
+                        ph.activities.forEach(a => rmHtml += `<li>${a}</li>`);
+                        rmHtml += `</ul><p class="mt-3 text-sm font-bold" style="color: #${accentHex}">🏁 Milestone: ${ph.milestone}</p></div>`;
+                    });
+                    rmHtml += `</div>`; addHTMLSection('Implementation Roadmap', rmHtml);
+                }
+
+                const fileName = `Managed_SASE_Proposal_${company.replace(/\s+/g, '_')}.pptx`;
+                await pres.writeFile({ fileName });
+
+                const statusEl = document.getElementById('proposalStatus');
+                const loaderEl = statusEl.querySelector('.loader');
+                if (loaderEl) loaderEl.style.display = 'none';
+                statusEl.classList.remove('hidden'); statusEl.style.color = '#16a34a';
+                document.getElementById('proposalStatusText').innerHTML = `✅ <strong>${fileName}</strong> downloaded!`;
+                
+                document.getElementById('printPdfBtn').classList.remove('hidden');
+
+            } catch (e) {
+                const statusEl = document.getElementById('proposalStatus');
+                const loaderEl = statusEl?.querySelector('.loader');
+                if (loaderEl) loaderEl.style.display = 'none';
+                statusEl.classList.remove('hidden'); statusEl.style.color = '#dc2626';
+                document.getElementById('proposalStatusText').innerHTML = `❌ <strong>Error:</strong> ${e.message.replace(/\n/g, '<br>')} <span style="color:#94a3b8;font-size:0.7rem">(See console)</span>`;
+                console.error('Proposal generation error:', e);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg> Generate Proposal (PPTX & PDF)`;
+            }
+        }
+    </script>
+</body>
+</html>
