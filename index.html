@@ -67,7 +67,8 @@
         .service-option:hover { background-color: #f8fafc; border-color: #cbd5e1; }
         .service-option input:checked { accent-color: #ea580c; }
 
-        #diagramWrapper { position: relative; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; overflow-x: auto; }
+        #diagramWrapper { position: relative; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; overflow: hidden; cursor: grab; user-select: none; touch-action: none; }
+        #diagramWrapper.panning { cursor: grabbing; }
         #diagramWrapper svg { max-width: 100%; height: auto; display: block; margin: 0 auto; }
         .diagram-legend { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 16px; padding: 12px 16px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.72rem; color: #475569; }
         .legend-item { display: flex; align-items: center; gap: 6px; }
@@ -923,6 +924,9 @@
         let PRICE_DB = {};
         let currentDiagramCode = '';
         let diagramZoom = 1;
+        let diagramPanX = 0, diagramPanY = 0; // current pan offset, in screen pixels
+        let isPanningDiagram = false;
+        let panStartClientX = 0, panStartClientY = 0, panStartX = 0, panStartY = 0;
         let customerLogoBase64 = null; 
 
         document.querySelectorAll('.coverDate, .pdfDateLabel').forEach(el => {
@@ -1019,13 +1023,63 @@
             });
         }
 
-        function zoomDiagram(factor) { diagramZoom *= factor; diagramZoom = Math.min(Math.max(diagramZoom, 0.3), 4); const svg = document.querySelector('#mermaidContainer svg'); if (svg) svg.style.transform = `scale(${diagramZoom})`; }
-        function resetZoom() { diagramZoom = 1; const svg = document.querySelector('#mermaidContainer svg'); if (svg) svg.style.transform = 'scale(1)'; }
+        // Applies the current pan + zoom together. translate() is listed before scale()
+        // deliberately: with CSS transform composition this means the pan offset is in
+        // plain screen pixels (matching raw mouse-drag distance 1:1) regardless of the
+        // current zoom level, rather than needing to be divided by the zoom factor.
+        function applyDiagramTransform() {
+            const svg = document.querySelector('#mermaidContainer svg');
+            if (svg) svg.style.transform = `translate(${diagramPanX}px, ${diagramPanY}px) scale(${diagramZoom})`;
+        }
+        function zoomDiagram(factor) { diagramZoom *= factor; diagramZoom = Math.min(Math.max(diagramZoom, 0.3), 4); applyDiagramTransform(); }
+        function resetZoom() { diagramZoom = 1; diagramPanX = 0; diagramPanY = 0; applyDiagramTransform(); }
+
+        // ── CLICK-AND-DRAG PANNING ("hand tool") ──
+        // Always-on: click (or touch) anywhere on the diagram and drag to move it
+        // around, same as a map widget — no separate mode toggle needed. Works at
+        // any zoom level, including 100%, for diagrams taller/wider than the
+        // visible wrapper.
+        function startDiagramPan(clientX, clientY) {
+            isPanningDiagram = true;
+            panStartClientX = clientX; panStartClientY = clientY;
+            panStartX = diagramPanX; panStartY = diagramPanY;
+            const wrapper = document.getElementById('diagramWrapper');
+            if (wrapper) wrapper.classList.add('panning');
+        }
+        function moveDiagramPan(clientX, clientY) {
+            if (!isPanningDiagram) return;
+            diagramPanX = panStartX + (clientX - panStartClientX);
+            diagramPanY = panStartY + (clientY - panStartClientY);
+            applyDiagramTransform();
+        }
+        function endDiagramPan() {
+            if (!isPanningDiagram) return;
+            isPanningDiagram = false;
+            const wrapper = document.getElementById('diagramWrapper');
+            if (wrapper) wrapper.classList.remove('panning');
+        }
+        (function initDiagramPanning() {
+            const wrapper = document.getElementById('diagramWrapper');
+            if (!wrapper) return;
+            wrapper.addEventListener('mousedown', (e) => { startDiagramPan(e.clientX, e.clientY); e.preventDefault(); });
+            document.addEventListener('mousemove', (e) => { if (isPanningDiagram) moveDiagramPan(e.clientX, e.clientY); });
+            document.addEventListener('mouseup', endDiagramPan);
+            wrapper.addEventListener('touchstart', (e) => { if (e.touches.length === 1) startDiagramPan(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+            wrapper.addEventListener('touchmove', (e) => { if (isPanningDiagram && e.touches.length === 1) { moveDiagramPan(e.touches[0].clientX, e.touches[0].clientY); e.preventDefault(); } }, { passive: false });
+            wrapper.addEventListener('touchend', endDiagramPan);
+            wrapper.addEventListener('touchcancel', endDiagramPan);
+        })();
         function toggleRawCode() { const box = document.getElementById('rawDiagramCode'); box.style.display = box.style.display === 'block' ? 'none' : 'block'; }
         function exportDiagramSVG() {
             const svg = document.querySelector('#mermaidContainer svg');
             if (!svg) return alert('No diagram to export.');
-            const blob = new Blob([svg.outerHTML], { type: 'image/svg+xml' });
+            // Export a clean copy at the diagram's natural size/position — strip
+            // whatever on-screen pan/zoom transform is currently applied so the
+            // downloaded file always opens full and centred, not shifted or cropped
+            // to match whatever the viewport happened to be showing.
+            const clone = svg.cloneNode(true);
+            clone.style.transform = '';
+            const blob = new Blob([clone.outerHTML], { type: 'image/svg+xml' });
             const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
             a.download = 'sase-topology.svg'; a.click();
         }
@@ -1831,6 +1885,7 @@ OUTPUT JSON: { "title": "...", "summary": "...", "sdwanText": "...", "sseText": 
                 if (scope !== 'SSE_Only') {
                     const mermaidContainer = document.getElementById('mermaidContainer');
                     mermaidContainer.innerHTML = '';
+                    resetZoom(); // fresh diagram starts untransformed, not wherever the last one was panned/zoomed to
                     const diag = await generateDetailedDiagram(siteObjects, userCount);
                     currentDiagramCode = diag;
                     document.getElementById('rawDiagramCode').textContent = diag;
@@ -2254,7 +2309,12 @@ Return ONLY valid JSON. No markdown.
                     let archHtml = `<p class="mb-4">Proposed Architecture for ${sites.length} sites and ${userCount} remote users.</p>`;
                     const svgEl = document.querySelector('#mermaidContainer svg');
                     if (svgEl) {
-                        archHtml += `<div class="border p-6 bg-slate-50 rounded-xl shadow-sm w-full overflow-hidden flex justify-center">${svgEl.outerHTML}</div>`;
+                        // Embed a clean copy, not whatever pan/zoom state the user happens to
+                        // have left the on-screen diagram in — the proposal should always show
+                        // the full diagram, same as the SVG export button already does.
+                        const svgClone = svgEl.cloneNode(true);
+                        svgClone.style.transform = '';
+                        archHtml += `<div class="border p-6 bg-slate-50 rounded-xl shadow-sm w-full overflow-hidden flex justify-center">${svgClone.outerHTML}</div>`;
                     } else {
                         archHtml += `<p class="italic text-gray-500 p-4 bg-yellow-50 rounded border border-yellow-200">Please generate the Technical Prisma Design (Step 5) first to include the topology diagram here.</p>`;
                     }
