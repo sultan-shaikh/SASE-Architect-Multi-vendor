@@ -871,7 +871,11 @@
                 key: 'fortinet', name: 'Fortinet Secure SASE', short: 'Fortinet', navTitle: 'Fortinet SASE Architect',
                 themeColor: '#dc2626',
                 sseLabel: 'FortiSASE (SSE)', sdwanLabel: 'FortiGate SD-WAN Sites', editionLabel: 'FortiSASE Edition',
-                skuMatch: /FG-|FGT|FC-|FAZ|FORTI|FSA/i,
+                // Matches FC-10-..., FC1-10-... through FC5-10-... (the FortiSASE
+                // per-user-tier subscription SKUs use FC2/FC3/FC4/FC5, not plain FC-,
+                // so a literal "FC-" alone misses them entirely), plus FG-, FGT,
+                // FAZ, FORTI, FSA.
+                skuMatch: /FG-|FGT|FC\d?-|FAZ|FORTI|FSA/i,
                 editions: [
                     { value: 'base', label: 'FortiSASE Base' },
                     { value: 'advanced', label: 'FortiSASE Advanced' },
@@ -1629,18 +1633,49 @@ Start your response with { and end with }.`;
 
                 const fileInput = document.getElementById('priceCsv');
                 if (!fileInput.files.length) { alert("Please upload a Price Book (SKU CSV) first — the BoM is generated strictly from it."); btn.disabled = false; btn.innerHTML = "5. Generate SASE Design"; return; }
-                let priceData = await readCsv(fileInput.files[0]);
-                if (!priceData) { alert(`No SKUs in the uploaded price book matched the ${VENDORS[currentVendor].name} SKU pattern. Please check the file or add relevant SKUs.`); btn.disabled = false; btn.innerHTML = "5. Generate SASE Design"; return; }
-                // Truncation guard: this used to cap at 25,000 chars, which was fine for a
-                // small price book (a few hundred rows) but silently cut off large catalogs
-                // (e.g. Fortinet's ~3,800-row list runs to ~460,000 chars) BEFORE the AI ever
-                // saw SKUs that happened to sit later in the file — including, for Fortinet,
-                // the FortiSASE subscription SKUs themselves, which caused the AI to invent
-                // plausible-looking SKUs instead of picking a real one it couldn't see.
-                // Gemini 2.5 Flash's context window comfortably fits a much larger prompt, so
-                // the cap is raised well above any price book we expect, with a true safety
-                // ceiling in case someone uploads something pathologically large.
-                if (priceData.length > 600000) priceData = priceData.substring(0, 600000) + ", ...[TRUNCATED — price book exceeds 600,000 characters; some SKUs may be missing from this list]";
+                let priceDataRaw = await readCsv(fileInput.files[0]); // also (re)populates PRICE_DB as a side effect
+                if (!priceDataRaw) { alert(`No SKUs in the uploaded price book matched the ${VENDORS[currentVendor].name} SKU pattern. Please check the file or add relevant SKUs.`); btn.disabled = false; btn.innerHTML = "5. Generate SASE Design"; return; }
+
+                // ══════════════════════════════════════════════════════════════
+                // SSE CANDIDATE LIST — filtered by relevance, not just truncated.
+                // Earlier this simply truncated the full vendor-matched SKU list at
+                // a fixed character count. For a small catalog (Prisma, ~340 rows)
+                // that's harmless; for a large one (Fortinet, ~3,800 rows / ~460,000
+                // chars) it either cut off real SKUs the AI needed (causing it to
+                // invent fake ones), or — once that cap was simply raised — sent a
+                // prompt so large it pushed past Netlify's function execution
+                // timeout (HTTP 504). The real fix is to not send the AI SKUs it has
+                // no use for at this step: a per-user/global subscription SKU (what
+                // this step needs) describes itself with the word "user(s)" in its
+                // own price-book description — e.g. Prisma's "...per user per
+                // year", Fortinet's "...Subscription for 500-1,999 Users...". The
+                // vast majority of a hardware vendor's catalog is per-device service
+                // bundles tied to a specific model, which never mention "user" and
+                // are already matched deterministically per-site by
+                // buildSdwanBomLines() above — this step never needs to see them.
+                // Filtering on that one signal cut a real 3,785-row / 460,000-char
+                // Fortinet catalog down to 20 genuinely relevant rows / ~4,000
+                // chars in testing, while keeping every SKU actually needed.
+                // ══════════════════════════════════════════════════════════════
+                const vendorSkuMatch = VENDORS[currentVendor].skuMatch;
+                const userWordPattern = /\busers?\b/i;
+                let sseEntries = [];
+                Object.entries(PRICE_DB).forEach(([sku, v]) => {
+                    if (!sku.match(vendorSkuMatch)) return;
+                    if (!userWordPattern.test(v.desc || '')) return; // not a per-user/global line — irrelevant here
+                    sseEntries.push(`${sku} (${v.desc})`);
+                });
+                // Fallback: if this price book doesn't follow that convention at all
+                // (zero matches), fall back to the full vendor-matched list rather
+                // than sending the AI nothing — with a safety cap, since without the
+                // relevance filter we're back to needing one.
+                let priceData;
+                if (sseEntries.length > 0) {
+                    priceData = sseEntries.join('; ');
+                } else {
+                    priceData = priceDataRaw;
+                    if (priceData.length > 120000) priceData = priceData.substring(0, 120000) + ", ...[TRUNCATED — price book exceeds 120,000 characters and had no SKUs matching the usual per-user description pattern]";
+                }
                 const priceContext = `\n\n*** APPROVED SKU LIST (you may ONLY use SKUs from this exact list — do not invent, modify, or substitute SKUs) ***\n${priceData}\n\n`;
 
                 const sdwanResult = (scope !== 'SSE_Only') ? buildSdwanBomLines(siteObjects) : { items: [], warnings: [] };
