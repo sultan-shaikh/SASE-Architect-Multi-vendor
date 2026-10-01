@@ -1636,15 +1636,38 @@ Start your response with { and end with }.`;
 
                 const sdwanResult = (scope !== 'SSE_Only') ? buildSdwanBomLines(siteObjects) : { items: [], warnings: [] };
 
+                // ══════════════════════════════════════════════════════════════
+                // VENDOR-SPECIFIC SSE COMMERCIAL MODEL GUIDANCE
+                // Prisma and Fortinet price their SSE/user-side offering completely
+                // differently. Prisma sells it à la carte (one SKU per module —
+                // DLP, CASB, AI Access, etc. are all separate purchasable lines).
+                // Fortinet does NOT: FortiSASE is sold as ONE all-inclusive
+                // per-user subscription, tiered by feature level (Standard vs
+                // Advanced) and by user-count band (e.g. 50-499, 500-1,999,
+                // 2,000-9,999, 10,000+). There is no standalone "DLP SKU" or
+                // "IPS SKU" for FortiSASE to buy on top — those features are
+                // already bundled into the single tier SKU. Without this
+                // explicit guidance the model will try to mirror Prisma's
+                // one-SKU-per-module pattern, find no real SKU for most
+                // modules, and invent plausible-looking ones instead —
+                // exactly the failure this block exists to prevent.
+                // ══════════════════════════════════════════════════════════════
+                const vendorSseGuidance = currentVendor === 'fortinet'
+                    ? `FORTINET SSE COMMERCIAL MODEL (read carefully — this vendor is NOT priced à la carte):
+FortiSASE is sold as ONE all-inclusive per-user subscription SKU, not as separate SKUs per security module. There is no individual "DLP", "IPS", "CASB", "ZTNA" or similar add-on SKU for FortiSASE — those capabilities are already bundled into whichever single tier SKU you select. In the approved SKU list, look for descriptions containing "FortiSASE Standard Subscription for <user band>" or "FortiSASE Advanced Subscription for <user band>" — each covers a specific user-count band (e.g. "50-499 Users", "500-1,999 Users", "2,000-9,999 Users", "10,000+ Users"). Select the ONE SKU whose Standard/Advanced tier best matches the selected Modules list below (if the customer selected more advanced capabilities like SOC/NOC integrations, prefer the Advanced-tier SKU; otherwise Standard is sufficient) AND whose user band contains the stated USER COUNT. Produce exactly ONE SSE BOM line using that single matching SKU, with qty equal to the full USER COUNT. Do NOT produce a separate BOM line for each selected module — the selected Modules list describes desired capabilities, not purchasable line items, for this vendor. The only exception: if a selected capability is genuinely sold as its own distinct add-on SKU elsewhere in the approved list (e.g. a SASE SD-WAN connector license), and that capability isn't already implied by the tiered SKU, you may add it as its own line — but only using a real SKU copied verbatim from the list.`
+                    : `PRISMA SSE COMMERCIAL MODEL: Prisma Access sells SSE capabilities à la carte. Produce one BOM line per applicable per-user subscription: the edition SKU plus one additional line for each selected add-on module that has its own matching SKU in the approved list.`;
+
                 const prompt = `Act as a ${VENDORS[currentVendor].name} SASE Architect. Customer: ${company}. SCOPE: ${scope.toUpperCase()}.
 PART 1 — SSE / User Security: ${sseText}
 PART 2 — SD-WAN Sites (context only — do NOT produce BOM lines for these; site hardware & device subscriptions are already priced separately): ${siteText}
 ${priceContext}
+${vendorSseGuidance}
+
 INSTRUCTIONS:
-1. Produce BOM lines ONLY for the SSE/user-side: per-user or per-seat subscriptions, the security modules/add-ons selected, and any SASE cloud management or bandwidth licence tied to USER COUNT (not to a specific site's hardware).
+1. Produce BOM lines ONLY for the SSE/user-side, following the commercial model described above for this specific vendor. Every line must be tied to USER COUNT, not to a specific site's hardware.
 2. Do NOT include any SD-WAN branch/DC/HQ hardware or per-device SKUs in your BOM — that part is handled outside this step. If PART 2 mentions device models, that's for your narrative context only.
-3. Use ONLY SKUs copied verbatim from the APPROVED SKU LIST above — never invent, alter, or guess a plausible-looking SKU.
-4. If no SKU in the list is a reasonable fit for a required line item, OMIT that line rather than inventing one, and mention the gap in "summary".
+3. Use ONLY SKUs copied verbatim from the APPROVED SKU LIST above — never invent, alter, or guess a plausible-looking SKU, even if you cannot find a perfect fit for every selected module. This rule has no exceptions.
+4. If no SKU in the list is a reasonable fit for a required line item, OMIT that line rather than inventing one, and mention the gap in "summary". This applies even when it means some selected Modules end up with no dedicated line — for Fortinet in particular, this is expected and correct, since most modules are already covered by the single tiered SKU rather than needing their own line.
 5. Split "capex" vs "opex". Use 0 for price and "TBD" for desc (the frontend maps real description/price locally from the SKU).
 OUTPUT JSON: { "title": "...", "summary": "...", "sdwanText": "...", "sseText": "...", "bom": [ {"sku": "...", "desc": "TBD", "qty": 1, "price": 0, "type": "capex"} ] } Return ONLY JSON.`;
 
