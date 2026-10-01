@@ -1631,7 +1631,16 @@ Start your response with { and end with }.`;
                 if (!fileInput.files.length) { alert("Please upload a Price Book (SKU CSV) first — the BoM is generated strictly from it."); btn.disabled = false; btn.innerHTML = "5. Generate SASE Design"; return; }
                 let priceData = await readCsv(fileInput.files[0]);
                 if (!priceData) { alert(`No SKUs in the uploaded price book matched the ${VENDORS[currentVendor].name} SKU pattern. Please check the file or add relevant SKUs.`); btn.disabled = false; btn.innerHTML = "5. Generate SASE Design"; return; }
-                if (priceData.length > 25000) priceData = priceData.substring(0, 25000) + ", ...[TRUNCATED]";
+                // Truncation guard: this used to cap at 25,000 chars, which was fine for a
+                // small price book (a few hundred rows) but silently cut off large catalogs
+                // (e.g. Fortinet's ~3,800-row list runs to ~460,000 chars) BEFORE the AI ever
+                // saw SKUs that happened to sit later in the file — including, for Fortinet,
+                // the FortiSASE subscription SKUs themselves, which caused the AI to invent
+                // plausible-looking SKUs instead of picking a real one it couldn't see.
+                // Gemini 2.5 Flash's context window comfortably fits a much larger prompt, so
+                // the cap is raised well above any price book we expect, with a true safety
+                // ceiling in case someone uploads something pathologically large.
+                if (priceData.length > 600000) priceData = priceData.substring(0, 600000) + ", ...[TRUNCATED — price book exceeds 600,000 characters; some SKUs may be missing from this list]";
                 const priceContext = `\n\n*** APPROVED SKU LIST (you may ONLY use SKUs from this exact list — do not invent, modify, or substitute SKUs) ***\n${priceData}\n\n`;
 
                 const sdwanResult = (scope !== 'SSE_Only') ? buildSdwanBomLines(siteObjects) : { items: [], warnings: [] };
